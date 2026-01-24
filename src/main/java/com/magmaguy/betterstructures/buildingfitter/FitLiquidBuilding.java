@@ -7,7 +7,6 @@ import com.magmaguy.betterstructures.util.WorldEditUtils;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.util.Vector;
 
 public class FitLiquidBuilding extends FitAnything {
 
@@ -29,7 +28,7 @@ public class FitLiquidBuilding extends FitAnything {
     private void scan(Chunk chunk) {
         //Note about the adjustments:
         //The 8 offset on x and y is to center the anchor on the chunk
-        Location originalLocation = new Location(chunk.getWorld(), chunk.getX() * 16D, 0, chunk.getZ() * 16D).add(new Vector(8, 0, 8));
+        Location originalLocation = new Location(chunk.getWorld(), chunk.getX() * 16D, 0, chunk.getZ() * 16D).add(8, 0, 8);
         //This gets the location of the highest solid block
         originalLocation.setY(originalLocation.getWorld().getHighestBlockYAt(originalLocation));
 
@@ -45,7 +44,7 @@ public class FitLiquidBuilding extends FitAnything {
                     return;
                 }
                 for (int i = 1; i < 20; i++)
-                    if (!originalLocation.clone().add(new Vector(0, i, 0)).getBlock().getType().isAir()) {
+                    if (!originalLocation.clone().add(0, i, 0).getBlock().getType().isAir()) {
                         return;
                     }
         }
@@ -77,7 +76,7 @@ public class FitLiquidBuilding extends FitAnything {
     }
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {
-        Location iteratedLocation = originalLocation.clone().add(new Vector(chunkX * 16, 1, chunkZ * 16));
+        Location iteratedLocation = originalLocation.clone().add(chunkX * 16, 1, chunkZ * 16);
         double newScore = TerrainAdequacy.scan(scanStep, schematicClipboard, iteratedLocation, schematicOffset, TerrainAdequacy.ScanType.LIQUID);
         if (newScore < 90) return;
         if (newScore == startingScore) {

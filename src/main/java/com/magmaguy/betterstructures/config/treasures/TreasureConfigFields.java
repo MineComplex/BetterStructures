@@ -19,27 +19,17 @@ import org.bukkit.loot.LootTables;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Getter
+@Setter
 public class TreasureConfigFields extends CustomConfigFields {
 
-    @Getter
     private final Map<Material, List<ConfigurationEnchantment>> enchantmentSettings = new HashMap<>();
     private final List<String> seenInvalidKeys = new ArrayList<>();
-    @Getter
-    @Setter
-    private Map<String, Object> rawLoot = new HashMap();
-    @Setter
+    private Map<String, Object> rawLoot = new HashMap<>();
     private Map<String, Object> rawEnchantmentSettings = new HashMap<>();
-    @Getter
-    @Setter
     private ChestContents chestContents = null;
-    @Getter
-    @Setter
     private double mean = 4;
-    @Getter
-    @Setter
     private double standardDeviation = 3;
-    @Getter
-    @Setter
     private LootTables vanillaTreasure = null;
 
     public TreasureConfigFields(String filename, boolean isEnabled) {
@@ -76,6 +66,7 @@ public class TreasureConfigFields extends CustomConfigFields {
                 Logger.warn("Incorrect material entry for enchantment settings of the configuration file " + filename);
                 continue;
             }
+
             List<ConfigurationEnchantment> configurationEnchantments = new ArrayList<>();
             Map<String, Object> enchantments = ((MemorySection) stringObjectEntry.getValue()).getValues(false);
             for (Map.Entry<String, Object> enchantmentsEntry : enchantments.entrySet()) {
@@ -89,7 +80,7 @@ public class TreasureConfigFields extends CustomConfigFields {
                 int maxLevel = 1;
                 double chance = 0;
                 for (Map.Entry<String, Object> enchantmentValue : ((ConfigurationSection) (enchantmentsEntry.getValue())).getValues(false).entrySet()) {
-                    switch (enchantmentValue.getKey().toLowerCase(Locale.ROOT)) {
+                    switch (enchantmentValue.getKey().toLowerCase()) {
                         case "minlevel":
                             minLevel = Integer.parseInt(enchantmentValue.getValue().toString());
                             break;
@@ -125,19 +116,7 @@ public class TreasureConfigFields extends CustomConfigFields {
         player.sendMessage("[BetterStructures] Reloaded plugin to add chest entry! It should now be live.");
     }
 
-    public class ConfigurationEnchantment {
-        private final Enchantment enchantment;
-        private final int minLevel;
-        private final int maxLevel;
-        private final double chance;
-
-        public ConfigurationEnchantment(Enchantment enchantment, int minLevel, int maxLevel, double chance) {
-            this.enchantment = enchantment;
-            this.minLevel = minLevel;
-            this.maxLevel = maxLevel;
-            this.chance = chance;
-        }
-
+    public record ConfigurationEnchantment(Enchantment enchantment, int minLevel, int maxLevel, double chance) {
         public void rollEnchantment(ItemMeta itemMeta) {
             if (ThreadLocalRandom.current().nextDouble() >= chance) return;
             int level = ThreadLocalRandom.current().nextInt(minLevel, maxLevel + 1);

@@ -5,7 +5,7 @@ import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import java.util.Arrays;
 
 public class GeneratorSurfaceGrasslandConfig extends GeneratorConfigFields {
-    public GeneratorSurfaceGrasslandConfig(){
+    public GeneratorSurfaceGrasslandConfig() {
         super("generator_surface_grassland", true, Arrays.asList(StructureType.SURFACE));
         setValidBiomesStrings(Arrays.asList(
                 "minecraft:plains",
@@ -23,7 +23,7 @@ public class GeneratorSurfaceGrasslandConfig extends GeneratorConfigFields {
                 "minecraft:windswept_forest",
                 "minecraft:windswept_hills",
                 "minecraft:custom"
-                ));
+        ));
         setTreasureFilename("treasure_overworld_surface.yml");
     }
 }

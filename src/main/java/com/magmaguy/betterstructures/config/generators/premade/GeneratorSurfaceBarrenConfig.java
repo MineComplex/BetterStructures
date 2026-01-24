@@ -5,7 +5,7 @@ import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import java.util.Arrays;
 
 public class GeneratorSurfaceBarrenConfig extends GeneratorConfigFields {
-    public GeneratorSurfaceBarrenConfig(){
+    public GeneratorSurfaceBarrenConfig() {
         super("generator_surface_barren", true, Arrays.asList(StructureType.SURFACE));
         setValidBiomesStrings(Arrays.asList(
                 "minecraft:badlands",

@@ -1,7 +1,6 @@
 plugins {
     id 'java-library'
     id 'idea'
-    id 'maven-publish'
     id "com.gradleup.shadow" version "8.3.5"
 }
 
@@ -20,7 +19,6 @@ repositories {
     maven { url = 'https://repo.codemc.org/repository/maven-public' }
     maven { url = 'https://maven.enginehub.org/repo/' }
     maven { url = 'https://nexus.phoenixdevt.fr/repository/maven-public/' }
-    maven { url = 'https://mvn.lumine.io/repository/maven-public/' }
 }
 
 dependencies {
@@ -30,18 +28,9 @@ dependencies {
     implementation (group: 'com.magmaguy', name: 'MagmaCore', version: '1.19-SNAPSHOT'){
         changing = true
     }
-    implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
     implementation 'org.apache.commons:commons-lang3:3.9'
     implementation group: 'org.reflections', name: 'reflections', version: '0.10.2'
     implementation group: 'org.joml', name: 'joml', version: '1.10.8'
-    implementation (group: 'com.magmaguy', name: 'EasyMinecraftGoals-dist', version: '1.19.22') {
-        changing = true
-    }
-    compileOnly group: 'com.magmaguy', name: 'EliteMobs', version: '9.3.3-SNAPSHOT'
-    compileOnly group: 'io.lumine', name: 'Mythic-Dist', version: '5.2.1'
-    compileOnly group: 'io.lumine', name: 'MythicLib-dist', version: '1.5.2-SNAPSHOT'
-    compileOnly group: 'net.Indyuce', name: 'MMOItems-API', version: '6.9.2-SNAPSHOT'
-    compileOnly group: 'com.sk89q.worldguard', name: 'worldguard-bukkit', version: '7.0.7'
     compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.3.0'
     compileOnly 'org.spigotmc:spigot-api:1.21.3-R0.1-SNAPSHOT'
 }
@@ -59,14 +48,8 @@ jar {
     archiveClassifier.set('min') // we want the Uberjar to be distributed, this is the minified version
 }
 
-String packagePath = 'com.magmaguy.shaded'
-
 // Relocating a Package
 shadowJar {
-    dependencies {
-        relocate('org.bstats', packagePath + '.bstats')
-        relocate('com.magmaguy.easyminecraftgoals', 'com.magmaguy.betterstructures.easyminecraftgoals')
-    }
     archiveClassifier.set(null)
     archiveFileName.set(project.name + ".jar")
     destinationDirectory.set(new File("testbed/plugins"))
@@ -90,35 +73,4 @@ java {
 
 processResources {
     filter org.apache.tools.ant.filters.ReplaceTokens, tokens: resourceTokens
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "BetterStructures"
-            url = "https://repo.magmaguy.com/releases"
-            credentials {
-                username = project.hasProperty('ossrhUsername') ? ossrhUsername : "Unknown user"
-                password = project.hasProperty('ossrhPassword') ? ossrhPassword : "Unknown password"
-            }
-        }
-    }
-
-    publications {
-        mavenJava(MavenPublication) {
-            pom {
-                groupId = 'com.magmaguy'
-                name = 'betterstructures'
-                description = 'BetterStructures repo'
-                url = 'https://magmaguy.com/'
-                from components.java
-                licenses {
-                    license {
-                        name = 'GPLV3'
-                        url = 'https://www.gnu.org/licenses/gpl-3.0.en.html'
-                    }
-                }
-            }
-        }
-    }
 }

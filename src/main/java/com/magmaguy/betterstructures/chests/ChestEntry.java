@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ChestEntry {
+
     private final Material material;
     @Getter
     private final double weight;
@@ -51,7 +52,7 @@ public class ChestEntry {
             finalItemStack.setAmount(amount);
             return finalItemStack;
         } catch (Exception e) {
-            return  null;
+            return null;
             //some items won't work in later versions as the materials get renamed
         }
     }

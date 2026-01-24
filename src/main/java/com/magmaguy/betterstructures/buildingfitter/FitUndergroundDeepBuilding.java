@@ -1,16 +1,15 @@
-package com.magmaguy.betterstructures.buildingfitter.util;
+package com.magmaguy.betterstructures.buildingfitter;
 
-import com.magmaguy.betterstructures.buildingfitter.FitUndergroundBuilding;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
 import com.magmaguy.magmacore.util.Logger;
+import lombok.experimental.UtilityClass;
 import org.bukkit.Chunk;
 
+@UtilityClass
 public class FitUndergroundDeepBuilding {
-    private FitUndergroundDeepBuilding() {
-    }
 
-    public static void fit(Chunk chunk) {
+    public void fit(Chunk chunk) {
         switch (chunk.getWorld().getEnvironment()) {
             case NORMAL:
             case CUSTOM:
@@ -28,7 +27,7 @@ public class FitUndergroundDeepBuilding {
         }
     }
 
-    public static void fit(Chunk chunk, SchematicContainer schematicContainer) {
+    public void fit(Chunk chunk, SchematicContainer schematicContainer) {
         switch (chunk.getWorld().getEnvironment()) {
             case NORMAL:
             case CUSTOM:

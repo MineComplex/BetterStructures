@@ -11,7 +11,7 @@ public class ReloadCommand extends AdvancedCommand {
     public ReloadCommand() {
         super(List.of("reload"));
         setPermission("betterstructures.*");
-        setUsage("/betterstructures reload");
+        setUsage("/bs reload");
         setDescription("Reloads the plugin.");
     }
 

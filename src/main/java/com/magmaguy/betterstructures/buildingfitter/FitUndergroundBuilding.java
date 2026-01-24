@@ -9,14 +9,13 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.util.Vector;
 
 import java.util.concurrent.ThreadLocalRandom;
 
 public class FitUndergroundBuilding extends FitAnything {
 
-    private int lowestY;
-    private int highestY;
+    private final int lowestY;
+    private final int highestY;
 
     //For commands
     public FitUndergroundBuilding(Chunk chunk, SchematicContainer schematicContainer, int lowestY, int highestY, GeneratorConfigFields.StructureType structureType) {
@@ -40,7 +39,7 @@ public class FitUndergroundBuilding extends FitAnything {
     private void scan(Chunk chunk) {
         //Note about the adjustments:
         //The 8 offset on x and y is to center the anchor on the chunk
-        Location originalLocation = new Location(chunk.getWorld(), chunk.getX() * 16D, 0, chunk.getZ() * 16D).add(new Vector(8, 0, 8));
+        Location originalLocation = new Location(chunk.getWorld(), chunk.getX() * 16D, 0, chunk.getZ() * 16D).add(8, 0, 8);
         switch (chunk.getWorld().getEnvironment()) {
             case NORMAL:
             case CUSTOM:
@@ -63,15 +62,14 @@ public class FitUndergroundBuilding extends FitAnything {
                                 streak = true;
                             }
                         } else {
-                            if (currentLocation.getBlock().getType() == Material.VOID_AIR ||
-                                    currentLocation.getBlock().getType() == Material.BEDROCK ||
+                            Material type = currentLocation.getBlock().getType();
+                            if (type == Material.VOID_AIR || type == Material.BEDROCK ||
                                     tolerance == 0) {
                                 if (streak) {
                                     streak = false;
                                     if (highPoint - lowPoint >= 20)
                                         break;
-                                    if (currentLocation.getBlock().getType() == Material.VOID_AIR ||
-                                            currentLocation.getBlock().getType() == Material.BEDROCK)
+                                    if (type == Material.VOID_AIR || type == Material.BEDROCK)
                                         return;
                                     tolerance = 3;
                                 }
@@ -108,15 +106,13 @@ public class FitUndergroundBuilding extends FitAnything {
                                 streak = true;
                             }
                         } else {
-                            if (currentLocation.getBlock().getType() == Material.VOID_AIR ||
-                                    currentLocation.getBlock().getType() == Material.BEDROCK ||
-                                    tolerance == 0) {
+                            Material type = currentLocation.getBlock().getType();
+                            if (type == Material.VOID_AIR || type == Material.BEDROCK || tolerance == 0) {
                                 if (streak) {
                                     streak = false;
                                     if (highPoint - lowPoint >= 20)
                                         break;
-                                    if (currentLocation.getBlock().getType() == Material.VOID_AIR ||
-                                            currentLocation.getBlock().getType() == Material.BEDROCK)
+                                    if (type == Material.VOID_AIR || type == Material.BEDROCK)
                                         return;
                                     tolerance = 3;
                                 }
@@ -156,15 +152,16 @@ public class FitUndergroundBuilding extends FitAnything {
                                 streak = true;
                             }
                         } else {
-                            if (currentLocation.getBlock().getType() == Material.VOID_AIR ||
-                                    currentLocation.getBlock().getType() == Material.BEDROCK ||
+                            Material type = currentLocation.getBlock().getType();
+                            if (type == Material.VOID_AIR ||
+                                    type == Material.BEDROCK ||
                                     tolerance == 0) {
                                 if (streak) {
                                     streak = false;
                                     if (highPoint - lowPoint >= 20)
                                         break;
-                                    if (currentLocation.getBlock().getType() == Material.VOID_AIR ||
-                                            currentLocation.getBlock().getType() == Material.BEDROCK)
+                                    if (type == Material.VOID_AIR ||
+                                            type == Material.BEDROCK)
                                         return;
                                     tolerance = 3;
                                 }
@@ -238,9 +235,9 @@ public class FitUndergroundBuilding extends FitAnything {
     }
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {
-        Location iteratedLocation = originalLocation.clone().add(new Vector(chunkX * 16, 0, chunkZ * 16));
+        Location iteratedLocation = originalLocation.clone().add(chunkX * 16, 0, chunkZ * 16);
         double score = TerrainAdequacy.scan(scanStep, schematicClipboard, iteratedLocation, schematicOffset, TerrainAdequacy.ScanType.UNDERGROUND);
-        if (!originalLocation.getWorld().getEnvironment().equals(World.Environment.NETHER)) {
+        if (originalLocation.getWorld().getEnvironment() != World.Environment.NETHER) {
             if (score < 70)
                 return;
         } else if (score < 50)

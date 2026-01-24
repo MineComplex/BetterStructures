@@ -29,13 +29,7 @@ public class DefaultConfig extends ConfigurationFile {
     private static int endAirBuildMaxAltitude;
     @Getter
     private static boolean newBuildingWarn;
-    @Getter
-    private static String regionProtectedMessage;
-    @Getter
-    private static boolean protectEliteMobsRegions;
     private static DefaultConfig instance;
-    @Getter
-    private static boolean setupDone;
     @Getter
     private static int modularChunkPastingSpeed = 10;
     @Getter
@@ -79,17 +73,6 @@ public class DefaultConfig extends ConfigurationFile {
         instance = this;
     }
 
-    public static void toggleSetupDone() {
-        setupDone = !setupDone;
-        ConfigurationEngine.writeValue(setupDone, instance.file, instance.getFileConfiguration(), "setupDone");
-    }
-
-    public static void toggleSetupDone(boolean value) {
-        setupDone = value;
-        ConfigurationEngine.writeValue(setupDone, instance.file, instance.getFileConfiguration(), "setupDone");
-    }
-
-
     public static boolean toggleWarnings() {
         newBuildingWarn = !newBuildingWarn;
         ConfigurationEngine.writeValue(newBuildingWarn, instance.file, instance.fileConfiguration, "warnAdminsAboutNewBuildings");
@@ -109,11 +92,8 @@ public class DefaultConfig extends ConfigurationFile {
         endAirBuildMinAltitude = ConfigurationEngine.setInt(fileConfiguration, "endAirBuildMinAltitude", 80);
         endAirBuildMaxAltitude = ConfigurationEngine.setInt(fileConfiguration, "endAirBuildMaxAltitude", 120);
         newBuildingWarn = ConfigurationEngine.setBoolean(fileConfiguration, "warnAdminsAboutNewBuildings", true);
-        regionProtectedMessage = ConfigurationEngine.setString(fileConfiguration, "regionProtectedMessage", "&8[BetterStructures] &cDefeat the zone's bosses to edit blocks!");
-        protectEliteMobsRegions = ConfigurationEngine.setBoolean(fileConfiguration, "protectEliteMobsRegions", true);
-        setupDone = ConfigurationEngine.setBoolean(fileConfiguration, "setupDone", false);
         modularChunkPastingSpeed = ConfigurationEngine.setInt(fileConfiguration, "modularChunkPastingSpeed", 10);
-        percentageOfTickUsedForPasting = ConfigurationEngine.setDouble(List.of("Sets the maximum percentage of a tick that BetterStructures will use to paste builds, however many it maybe trying to generate.", "Ranges from 0.01 to 1, where 0.01 is 1% and 1 is 100%.", "Slower speeds will lower performance impact, but can lead to other problems such as builds suddenly popping in."),fileConfiguration, "percentageOfTickUsedForPasting", 0.2);
+        percentageOfTickUsedForPasting = ConfigurationEngine.setDouble(List.of("Sets the maximum percentage of a tick that BetterStructures will use to paste builds, however many it maybe trying to generate.", "Ranges from 0.01 to 1, where 0.01 is 1% and 1 is 100%.", "Slower speeds will lower performance impact, but can lead to other problems such as builds suddenly popping in."), fileConfiguration, "percentageOfTickUsedForPasting", 0.2);
         percentageOfTickUsedForPregeneration = ConfigurationEngine.setDouble(List.of("Sets the maximum percentage of a tick that BetterStructures will use for world pregeneration when using the pregenerate command.", "Ranges from 0.01 to 1, where 0.01 is 1% and 1 is 100%.", "This controls how much of each server tick is dedicated to generating chunks, allowing you to balance generation speed with server performance.", "Lower values will generate chunks more slowly but reduce server lag, while higher values will generate faster but may impact server performance."), fileConfiguration, "percentageOfTickUsedForPregeneration", 0.1);
         pregenerationTPSPauseThreshold = ConfigurationEngine.setDouble(List.of("The TPS threshold at which chunk pregeneration will pause to protect server performance.", "When server TPS drops below this value, pregeneration will pause until TPS recovers.", "Default: 12.0"), fileConfiguration, "pregenerationTPSPauseThreshold", 12.0);
         pregenerationTPSResumeThreshold = ConfigurationEngine.setDouble(List.of("The TPS threshold at which chunk pregeneration will resume after being paused.", "Pregeneration will only resume when server TPS is at or above this value.", "Should be higher than the pause threshold to prevent rapid pause/resume cycles.", "Default: 14.0"), fileConfiguration, "pregenerationTPSResumeThreshold", 14.0);
@@ -127,7 +107,7 @@ public class DefaultConfig extends ConfigurationFile {
         distanceShallow = ConfigurationEngine.setInt(
                 List.of(
                         "Sets the distance between structures in shallow underground structure generation.",
-                        "Shorter distances between structures will result in more structures overall."),fileConfiguration, "distanceShallow", 22);
+                        "Shorter distances between structures will result in more structures overall."), fileConfiguration, "distanceShallow", 22);
         distanceDeep = ConfigurationEngine.setInt(
                 List.of(
                         "Sets the distance between structures in deep underground structure generation.",

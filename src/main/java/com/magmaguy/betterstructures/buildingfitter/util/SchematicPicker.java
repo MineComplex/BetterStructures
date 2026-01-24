@@ -10,19 +10,25 @@ import java.util.HashMap;
 import java.util.List;
 
 public class SchematicPicker {
+
     public static SchematicContainer pick(Location naiveAnchorLocation, GeneratorConfigFields.StructureType structureType) {
         List<SchematicContainer> schematicContainers = new ArrayList<>(SchematicContainer.getSchematics().get(structureType));
-        if (schematicContainers.isEmpty()) return null;
+        if (schematicContainers.isEmpty())
+            return null;
+
         schematicContainers.removeIf(schematicContainer ->
                 !schematicContainer.isValidWorld(naiveAnchorLocation.getWorld().getName()) ||
                         !schematicContainer.isValidEnvironment(naiveAnchorLocation.getWorld().getEnvironment()) ||
                         !schematicContainer.isValidBiome(naiveAnchorLocation.getBlock().getBiome()) ||
                         !schematicContainer.isValidYLevel(naiveAnchorLocation.getBlockY()));
-        if (schematicContainers.isEmpty()) return null;
+
+        if (schematicContainers.isEmpty())
+            return null;
+
         HashMap<Integer, Double> probabilities = new HashMap<>();
         for (int i = 0; i < schematicContainers.size(); i++)
             probabilities.put(i, schematicContainers.get(i).getSchematicConfigField().getWeight());
-        SchematicContainer schematicContainer = schematicContainers.get(WeighedProbability.pickWeightedProbability(probabilities));
-        return schematicContainer;
+        return schematicContainers.get(WeighedProbability.pickWeightedProbability(probabilities));
     }
+
 }

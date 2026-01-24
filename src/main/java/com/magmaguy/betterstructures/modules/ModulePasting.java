@@ -1,14 +1,12 @@
 package com.magmaguy.betterstructures.modules;
 
 import com.magmaguy.betterstructures.MetadataHandler;
-import com.magmaguy.betterstructures.api.ChestFillEvent;
-import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.chests.ChestContents;
+import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.config.modulegenerators.ModuleGeneratorsConfigFields;
 import com.magmaguy.betterstructures.config.treasures.TreasureConfig;
 import com.magmaguy.betterstructures.config.treasures.TreasureConfigFields;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
-import com.magmaguy.easyminecraftgoals.NMSManager;
 import com.magmaguy.magmacore.util.Logger;
 import com.magmaguy.magmacore.util.SpigotMessage;
 import com.magmaguy.magmacore.util.WorkloadRunnable;
@@ -28,47 +26,32 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Directional;
-import org.bukkit.block.data.Rail;
 import org.bukkit.block.data.type.Chest;
-import org.bukkit.block.data.type.Sign;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
 public final class ModulePasting {
-    private final List<InterpretedSign> interpretedSigns = new ArrayList<>();
+
+    private final World world;
     private final List<ChestPlacement> chestsToPlace = new ArrayList<>();
     private final List<EntitySpawn> entitiesToSpawn = new ArrayList<>();
     private final String spawnPoolSuffix;
     private final Location startLocation;
-    private final boolean createModularWorld;
     private final List<NbtPlacement> nbtToPlace = new ArrayList<>();
-    private ModularWorld modularWorld;
-    private final World world;
-    private final File worldFolder;
     private final ModuleGeneratorsConfigFields moduleGeneratorsConfigFields;
 
-    public ModulePasting(World world, File worldFolder, Deque<WFCNode> WFCNodeDeque, String spawnPoolSuffix, Location startLocation, ModuleGeneratorsConfigFields moduleGeneratorsConfigFields) {
+    public ModulePasting(World world, Deque<WFCNode> WFCNodeDeque, String spawnPoolSuffix, Location startLocation, ModuleGeneratorsConfigFields moduleGeneratorsConfigFields) {
+        this.world = world;
         this.spawnPoolSuffix = spawnPoolSuffix;
         this.startLocation = startLocation;
-        this.world = world;
-        this.worldFolder = worldFolder;
         this.moduleGeneratorsConfigFields = moduleGeneratorsConfigFields;
 
-        // Check debug mode and modular world creation settings from first node
-        WFCNode firstNode = WFCNodeDeque.peek();
-        this.createModularWorld = firstNode != null && firstNode.getWfcGenerator() != null &&
-                firstNode.getWfcGenerator().getModuleGeneratorsConfigFields().isWorldGeneration();
-
-        batchPaste(WFCNodeDeque, interpretedSigns);
-
-        createModularWorld(world, worldFolder);
+        batchPaste(WFCNodeDeque, new ArrayList<>());
 
         // Send notification to players
         if (DefaultConfig.isNewBuildingWarn()) {
@@ -76,10 +59,10 @@ public final class ModulePasting {
                 if (player.hasPermission("betterstructures.warn")) {
                     player.spigot().sendMessage(
                             SpigotMessage.commandHoverMessage(
-                                    "[BetterStructures] New dungeon started generating! Do not stop your server now. Click to teleport. Do \"/betterstructures silent\" to stop getting warnings!",
+                                    "[BetterStructures] New dungeon started generating! Do not stop your server now. Click to teleport. Do \"/bs silent\" to stop getting warnings!",
                                     "Click to teleport to " + startLocation.getWorld().getName() + ", " +
                                             startLocation.getBlockX() + ", " + startLocation.getBlockY() + ", " + startLocation.getBlockZ(),
-                                    "/betterstructures teleport " + startLocation.getWorld().getName() + " " +
+                                    "/bs teleport " + startLocation.getWorld().getName() + " " +
                                             startLocation.getBlockX() + " " + startLocation.getBlockY() + " " + startLocation.getBlockZ())
                     );
                 }
@@ -316,34 +299,8 @@ public final class ModulePasting {
 
         List<InterpretedSign> freshlyInterpretedSigns = new ArrayList<>();
 
-        // Enable fast path only for world-based generation
-        final boolean fastPathEnabled = this.createModularWorld;
-
-        for (Pasteable pasteable : pasteableList) {
-            if (!fastPathEnabled) {
-                // Not world-based generation: force slow placement for EVERYTHING
-                slowBlocks.add(pasteable);
-                continue;
-            }
-
-            // World-based generation: keep original split between fast/slow
-            if (pasteable.blockData.getLightEmission() > 0
-                    || pasteable.blockData instanceof Directional
-                    || pasteable.blockData instanceof Rail
-                    || pasteable.blockData instanceof Sign) {
-                slowBlocks.add(pasteable);
-            } else {
-                pasteMeRunnable.addWorkload(() -> {
-                    NMSManager.getAdapter().setBlockInNativeDataPalette(
-                            pasteable.location.getWorld(),
-                            pasteable.location.getBlockX(),
-                            pasteable.location.getBlockY(),
-                            pasteable.location.getBlockZ(),
-                            pasteable.blockData,
-                            true);
-                });
-            }
-        }
+        // Not world-based generation: force slow placement for EVERYTHING
+        slowBlocks.addAll(pasteableList);
 
         pasteMeRunnable.runTaskTimer(MetadataHandler.PLUGIN, 0, 1);
 
@@ -351,11 +308,6 @@ public final class ModulePasting {
     }
 
     private void postPasteProcessing(List<EntityPasteInfo> entityPasteInfos) {
-        if (createModularWorld) {
-            createModularWorld(world, worldFolder);
-            modularWorld.spawnOtherEntities();
-        }
-
         // 1) Paste deferred NBT-rich blocks (dispenser, spawner, etc.) with WE so NBT is preserved
         if (!nbtToPlace.isEmpty()) {
             com.sk89q.worldedit.world.World adaptedWorld = BukkitAdapter.adapt(world);
@@ -396,10 +348,7 @@ public final class ModulePasting {
                     ChestContents chestContents = new ChestContents(treasureConfigFields);
                     Container container = (Container) block.getState();
                     chestContents.rollChestContents(container);
-                    ChestFillEvent chestFillEvent = new ChestFillEvent(container, treasureFilename);
-                    Bukkit.getServer().getPluginManager().callEvent(chestFillEvent);
-                    if (!chestFillEvent.isCancelled())
-                        container.update(true);
+                    container.update(true);
                 }
             }
         }
@@ -425,10 +374,6 @@ public final class ModulePasting {
                 Logger.warn("Failed to paste entities for batch operation at " + info.location + ": " + e.getMessage());
             }
         }
-    }
-
-    private void createModularWorld(World world, File worldFolder) {
-        modularWorld = new ModularWorld(world, worldFolder, interpretedSigns);
     }
 
     private record NbtPlacement(Location location, BaseBlock baseBlock) {

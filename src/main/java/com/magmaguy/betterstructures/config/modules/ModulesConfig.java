@@ -9,6 +9,7 @@ import lombok.Getter;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class ModulesConfig extends CustomConfig {
     @Getter
@@ -20,12 +21,12 @@ public class ModulesConfig extends CustomConfig {
 
         ModulesContainer.initializeSpecialModules();
 
-        File modulesFile = new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath()+ File.separatorChar + "modules");
+        File modulesFile = new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath() + File.separatorChar + "modules");
         if (!modulesFile.exists()) modulesFile.mkdir();
 
-        HashMap<File, Clipboard> clipboards = new HashMap();
+        HashMap<File, Clipboard> clipboards = new HashMap<>();
         //Initialize schematics
-        for (File file : new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath() + File.separatorChar + "modules").listFiles())
+        for (File file : Objects.requireNonNull(new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath() + File.separatorChar + "modules").listFiles()))
             scanDirectoryForSchematics(file, clipboards);
 
         for (String key : super.getCustomConfigFieldsHashMap().keySet())
@@ -67,9 +68,8 @@ public class ModulesConfig extends CustomConfig {
             Clipboard clipboard = Schematic.load(file);
             if (clipboard == null) return;
             clipboards.put(file, clipboard);
-        }
-        else if (file.isDirectory())
-            for (File iteratedFile : file.listFiles())
+        } else if (file.isDirectory())
+            for (File iteratedFile : Objects.requireNonNull(file.listFiles()))
                 scanDirectoryForSchematics(iteratedFile, clipboards);
     }
 

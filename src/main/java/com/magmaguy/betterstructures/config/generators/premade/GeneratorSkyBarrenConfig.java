@@ -5,7 +5,7 @@ import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import java.util.Arrays;
 
 public class GeneratorSkyBarrenConfig extends GeneratorConfigFields {
-    public GeneratorSkyBarrenConfig(){
+    public GeneratorSkyBarrenConfig() {
         super("generator_sky_barren", true, Arrays.asList(StructureType.SKY));
         setValidBiomesStrings(Arrays.asList(
                 "minecraft:badlands",

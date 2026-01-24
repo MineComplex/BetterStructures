@@ -14,44 +14,34 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
+@Getter
 public class SchematicContainer {
+
     @Getter
     private static final ArrayListMultimap<GeneratorConfigFields.StructureType, SchematicContainer> schematics = ArrayListMultimap.create();
-    @Getter
+
     private final Clipboard clipboard;
-    @Getter
     private final SchematicConfigField schematicConfigField;
-    @Getter
     private final GeneratorConfigFields generatorConfigFields;
-    @Getter
     private final String clipboardFilename;
-    @Getter
     private final String configFilename;
-    @Getter
     private final List<Vector> chestLocations = new ArrayList<>();
-    @Getter
     private final HashMap<Vector, EntityType> vanillaSpawns = new HashMap<>();
-    @Getter
-    private final HashMap<Vector, String> eliteMobsSpawns = new HashMap<>();
-    @Getter
-    private final HashMap<Vector, String> mythicMobsSpawns = new HashMap<>(); // carm - Support for MythicMobs
-    @Getter
-    List<AbstractBlock> abstractBlocks = new ArrayList<>();
-    @Getter
-    private ChestContents chestContents = null;
-    @Getter
-    private boolean valid = true;
+
+    private final HashMap<Vector, String> eliteMobsSpawns = new HashMap<>(), mythicMobsSpawns = new HashMap<>();
+
+    private ChestContents chestContents;
 
     public SchematicContainer(Clipboard clipboard, String clipboardFilename, SchematicConfigField schematicConfigField, String configFilename) {
         this.clipboard = clipboard;
@@ -70,35 +60,23 @@ public class SchematicContainer {
                     BlockState weBlockState = clipboard.getBlock(translatedLocation);
                     Material minecraftMaterial = BukkitAdapter.adapt(weBlockState.getBlockType());
                     if (minecraftMaterial == null) continue;
+
                     //register chest location
                     if (minecraftMaterial.equals(Material.CHEST) ||
                             minecraftMaterial.equals(Material.TRAPPED_CHEST) ||
                             minecraftMaterial.equals(Material.SHULKER_BOX)) {
                         chestLocations.add(new Vector(x, y, z));
+                        continue;
                     }
-                    if (minecraftMaterial.equals(Material.ACACIA_SIGN) ||
-                            minecraftMaterial.equals(Material.ACACIA_WALL_SIGN) ||
-                            minecraftMaterial.equals(Material.SPRUCE_SIGN) ||
-                            minecraftMaterial.equals(Material.SPRUCE_WALL_SIGN) ||
-                            minecraftMaterial.equals(Material.BIRCH_SIGN) ||
-                            minecraftMaterial.equals(Material.BIRCH_WALL_SIGN) ||
-                            minecraftMaterial.equals(Material.CRIMSON_SIGN) ||
-                            minecraftMaterial.equals(Material.CRIMSON_WALL_SIGN) ||
-                            minecraftMaterial.equals(Material.DARK_OAK_SIGN) ||
-                            minecraftMaterial.equals(Material.DARK_OAK_WALL_SIGN) ||
-                            minecraftMaterial.equals(Material.JUNGLE_SIGN) ||
-                            minecraftMaterial.equals(Material.JUNGLE_WALL_SIGN) ||
-                            minecraftMaterial.equals(Material.OAK_SIGN) ||
-                            minecraftMaterial.equals(Material.OAK_WALL_SIGN) ||
-                            minecraftMaterial.equals(Material.WARPED_SIGN) ||
-                            minecraftMaterial.equals(Material.WARPED_WALL_SIGN)) {
+
+                    if (Tag.SIGNS.isTagged(minecraftMaterial)) {
                         BaseBlock baseBlock = clipboard.getFullBlock(translatedLocation);
                         //For future reference, I don't know how to get the data in any other way than parsing the string. Sorry!
-                        String line1 = WorldEditUtils.getLine(baseBlock, 1);
+                        String line1 = WorldEditUtils.getLine(baseBlock, 1).toLowerCase();
 
                         //Case for spawning a vanilla mob
-                        if (line1.toLowerCase(Locale.ROOT).contains("[spawn]")) {
-                            String line2 = WorldEditUtils.getLine(baseBlock, 2).toUpperCase(Locale.ROOT).replaceAll("\"", "");
+                        if (line1.contains("[spawn]")) {
+                            String line2 = WorldEditUtils.getLine(baseBlock, 2).toUpperCase().replaceAll("\"", "");
                             EntityType entityType;
                             try {
                                 entityType = EntityType.valueOf(line2);
@@ -111,29 +89,18 @@ public class SchematicContainer {
                                 }
                             }
                             vanillaSpawns.put(new Vector(x, y, z), entityType);
-                        } else if (line1.toLowerCase(Locale.ROOT).contains("[elitemobs]")) {
-                            if (Bukkit.getPluginManager().getPlugin("EliteMobs") == null) {
-                                Bukkit.getLogger().warning("[BetterStructures] " + configFilename + " uses EliteMobs bosses but you do not have EliteMobs installed! BetterStructures does not require EliteMobs to work, but if you want cool EliteMobs boss fights you will have to install EliteMobs here: https://nightbreak.io/plugin/elitemobs/");
-                                Bukkit.getLogger().warning("[BetterStructures] Since EliteMobs is not installed, " + configFilename + " will not be used.");
-                                valid = false;
-                                return;
-                            }
-                            String filename = "";
-                            for (int i = 2; i < 5; i++) filename += WorldEditUtils.getLine(baseBlock, i);
-                            eliteMobsSpawns.put(new Vector(x, y, z), filename);
-                        } else if (line1.toLowerCase(Locale.ROOT).contains("[mythicmobs]")) { // carm start - Support MythicMobs
-                            if (Bukkit.getPluginManager().getPlugin("MythicMobs") == null) {
-                                Bukkit.getLogger().warning("[BetterStructures] " + configFilename + " uses MythicMobs bosses but you do not have MythicMobs installed! BetterStructures does not require MythicMobs to work, but if you want MythicMobs boss fights you will have to install MythicMobs.");
-                                Bukkit.getLogger().warning("[BetterStructures] Since MythicMobs is not installed, " + configFilename + " will not be used.");
-                                valid = false;
-                                return;
-                            }
+                        } else if (line1.contains("[elitemobs]")) {
+                            StringBuilder filename = new StringBuilder();
+                            for (int i = 2; i < 5; i++) filename.append(WorldEditUtils.getLine(baseBlock, i));
+                            eliteMobsSpawns.put(new Vector(x, y, z), filename.toString());
+                        } else if (line1.contains("[mythicmobs]")) { // carm start - Support MythicMobs
                             String mob = WorldEditUtils.getLine(baseBlock, 2);
                             String level = WorldEditUtils.getLine(baseBlock, 3);
                             mythicMobsSpawns.put(new Vector(x, y, z), mob + (level.isEmpty() ? "" : ":" + level));
-                        } // carm end - Support MythicMobs
+                        }
                     }
                 }
+
         chestContents = generatorConfigFields.getChestContents();
         if (schematicConfigField.getTreasureFile() != null && !schematicConfigField.getTreasureFile().isEmpty()) {
             TreasureConfigFields treasureConfigFields = TreasureConfig.getConfigFields(schematicConfigField.getFilename());
@@ -143,8 +110,8 @@ public class SchematicContainer {
             }
             chestContents = schematicConfigField.getChestContents();
         }
-        if (valid)
-            generatorConfigFields.getStructureTypes().forEach(structureType -> schematics.put(structureType, this));
+
+        generatorConfigFields.getStructureTypes().forEach(structureType -> schematics.put(structureType, this));
     }
 
     public static void shutdown() {
@@ -164,12 +131,12 @@ public class SchematicContainer {
      * @param biome The biome to validate
      * @return True if the biome is valid, false otherwise
      */
-    public boolean isValidBiome(Object biomeObj) {
+    public boolean isValidBiome(Biome biome) {
         if (generatorConfigFields.getValidBiomesNamespaces() == null) return true;
         if (generatorConfigFields.getValidBiomesNamespaces().isEmpty()) return true;
 
         // Extract biome identifier based on version
-        String biomeString = getBiomeIdentifier(biomeObj);
+        String biomeString = biome.getKey().toString();
 
         for (String validBiome : generatorConfigFields.getValidBiomesNamespaces()) {
             if (biomeString.equals(validBiome)) {
@@ -178,64 +145,6 @@ public class SchematicContainer {
         }
 
         return false;
-    }
-
-    /**
-     * Gets a string identifier for a biome that works across different Minecraft versions.
-     * Handles both interface (newer) and class (older) implementation of Biome.
-     *
-     * @param biomeObj The biome to get an identifier for (passed as Object to avoid class casting issues)
-     * @return A string identifier for the biome
-     */
-    private String getBiomeIdentifier(Object biomeObj) {
-        // First, try to use reflection to safely handle both class and interface versions
-        try {
-            // Try to get the getKey method (newer versions)
-            java.lang.reflect.Method getKeyMethod = biomeObj.getClass().getMethod("getKey");
-            Object key = getKeyMethod.invoke(biomeObj);
-
-            // Get namespace and key from the NamespacedKey
-            java.lang.reflect.Method getNamespaceMethod = key.getClass().getMethod("getNamespace");
-            java.lang.reflect.Method getKeyNameMethod = key.getClass().getMethod("getKey");
-
-            String namespace = (String) getNamespaceMethod.invoke(key);
-            String keyName = (String) getKeyNameMethod.invoke(key);
-
-            return namespace + ":" + keyName;
-        } catch (Exception e) {
-            // Older versions may use different methods or be enums
-            try {
-                // If it's an enum, try to get the name
-                if (biomeObj.getClass().isEnum()) {
-                    String enumName = ((Enum<?>) biomeObj).name().toLowerCase();
-                    return "minecraft:" + enumName;
-                }
-
-                // Try name() method which might exist in some implementations
-                java.lang.reflect.Method nameMethod = biomeObj.getClass().getMethod("name");
-                String name = (String) nameMethod.invoke(biomeObj);
-                return "minecraft:" + name.toLowerCase();
-            } catch (Exception e2) {
-                // Last resort - use toString and clean it up
-                String fallback = biomeObj.toString();
-
-                // Try to extract the name from common toString() formats
-                if (fallback.contains("{") && fallback.contains("}")) {
-                    // Handle patterns like "Biome{name=DESERT}"
-                    int startIndex = fallback.indexOf("=") + 1;
-                    int endIndex = fallback.indexOf("}", startIndex);
-                    if (startIndex > 0 && endIndex > startIndex) {
-                        fallback = fallback.substring(startIndex, endIndex);
-                    }
-                } else if (fallback.contains(".")) {
-                    // Handle patterns like "ENUM.DESERT"
-                    fallback = fallback.substring(fallback.lastIndexOf(".") + 1);
-                }
-
-                // Clean up and return with default namespace
-                return "minecraft:" + fallback.toLowerCase().trim();
-            }
-        }
     }
 
     public boolean isValidYLevel(int yLevel) {

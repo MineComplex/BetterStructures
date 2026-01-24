@@ -2,7 +2,6 @@ package com.magmaguy.betterstructures.commands;
 
 import com.magmaguy.betterstructures.config.treasures.TreasureConfig;
 import com.magmaguy.betterstructures.config.treasures.TreasureConfigFields;
-import com.magmaguy.betterstructures.util.ItemStackSerialization;
 import com.magmaguy.magmacore.command.AdvancedCommand;
 import com.magmaguy.magmacore.command.CommandData;
 import com.magmaguy.magmacore.command.arguments.IntegerCommandArgument;
@@ -19,13 +18,13 @@ public class LootifyCommand extends AdvancedCommand {
     public LootifyCommand() {
         super(List.of("lootify"));
         ArrayList<String> treasures = new ArrayList<>(TreasureConfig.getTreasureConfigurations().keySet());
-        addArgument("generator", new ListStringCommandArgument(treasures,"<treasures>"));
+        addArgument("generator", new ListStringCommandArgument(treasures, "<treasures>"));
         addArgument("rarity", new ListStringCommandArgument("<rarity>"));
         addArgument("minAmount", new IntegerCommandArgument("<minAmount>"));
         addArgument("maxAmount", new IntegerCommandArgument("<maxAmount>"));
         addArgument("weight", new IntegerCommandArgument("<weight>"));
         setPermission("betterstructures.*");
-        setUsage("/betterstructures lootify <generator> <rarity> <minAmount> <maxAmount> <weight>");
+        setUsage("/bs lootify <generator> <rarity> <minAmount> <maxAmount> <weight>");
         setDescription("Adds a held item to the loot settings of a generator");
     }
 
@@ -38,6 +37,7 @@ public class LootifyCommand extends AdvancedCommand {
                 commandData.getStringArgument("weight"),
                 commandData.getPlayerSender());
     }
+
     private void lootify(String generator, String rarity, String minAmount, String maxAmount, String weight, Player player) {
         TreasureConfigFields treasureConfigFields = TreasureConfig.getConfigFields(generator);
         if (treasureConfigFields == null) {
@@ -91,8 +91,8 @@ public class LootifyCommand extends AdvancedCommand {
         else
             info = itemStack.getType().toString();
         Map<String, Object> configMap = new HashMap<>();
-        configMap.put("serialized", ItemStackSerialization.deserializeItem(itemStack));
-        configMap.put("amount", minAmount +"-"+maxAmount);
+        configMap.put("serialized", itemStack.serialize());
+        configMap.put("amount", minAmount + "-" + maxAmount);
         configMap.put("weight", weightDouble);
         configMap.put("info", info);
         treasureConfigFields.addChestEntry(configMap, rarity, player);

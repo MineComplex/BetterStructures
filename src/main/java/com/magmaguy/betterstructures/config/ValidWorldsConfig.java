@@ -17,7 +17,7 @@ import java.util.List;
 
 public class ValidWorldsConfig extends ConfigurationFile {
     @Getter
-    private static HashMap<World, Boolean> validWorlds = new HashMap<>();
+    private static final HashMap<World, Boolean> validWorlds = new HashMap<>();
     @Getter
     private static boolean whitelistNewWorlds;
     private static ValidWorldsConfig instance;

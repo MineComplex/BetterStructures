@@ -9,6 +9,7 @@ import lombok.Getter;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class SchematicConfig extends CustomConfig {
     @Getter
@@ -18,13 +19,7 @@ public class SchematicConfig extends CustomConfig {
         super("schematics", SchematicConfigField.class);
         schematicConfigurations.clear();
 
-        File readMeFile = new File(MetadataHandler.PLUGIN.getDataFolder(), "schematics" + File.separatorChar + "ReadMe.txt");
-        if (!readMeFile.exists()) {
-            readMeFile.getParentFile().mkdirs();
-            MetadataHandler.PLUGIN.saveResource("schematics" + File.separatorChar + "ReadMe.txt", false);
-        }
-
-        HashMap<File, Clipboard> clipboards = new HashMap();
+        HashMap<File, Clipboard> clipboards = new HashMap<>();
         //Initialize schematics
         for (File file : new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath() + File.separatorChar + "schematics").listFiles())
             scanDirectoryForSchematics(file, clipboards);
@@ -64,9 +59,8 @@ public class SchematicConfig extends CustomConfig {
             Clipboard clipboard = Schematic.load(file);
             if (clipboard == null) return;
             clipboards.put(file, clipboard);
-        }
-        else if (file.isDirectory())
-            for (File iteratedFile : file.listFiles())
+        } else if (file.isDirectory())
+            for (File iteratedFile : Objects.requireNonNull(file.listFiles()))
                 scanDirectoryForSchematics(iteratedFile, clipboards);
     }
 

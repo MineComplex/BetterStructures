@@ -9,29 +9,23 @@ import org.joml.Vector3i;
 
 import java.util.*;
 
+@Getter
 public class ModulesContainer {
 
     @Getter
     private static final HashMap<String, ModulesContainer> modulesContainers = new HashMap<>();
     private static final List<Integer> validRotations = Arrays.asList(0, 90, 180, 270);
-    @Getter
-    private final Clipboard clipboard;
-    @Getter
-    private final String clipboardFilename;
-    private final String configFilename;
-    @Getter
-    private final int rotation;
-    private final Map<Direction, HashSet<ModulesContainer>> validBorders = new HashMap<>();
-    @Getter
-    private final ModulesConfigFields modulesConfigField;
-    @Getter
-    private BorderTags borderTags = new BorderTags(new EnumMap<>(Direction.class));
-    @Getter
-    private boolean nothing = false;
-    @Getter
-    private boolean horizontalEdge = false;
     private static final String WORLD_BORDER = "world_border";
     public static ModulesContainer nothingContainer;
+    private final Clipboard clipboard;
+    private final String clipboardFilename;
+    private final String configFilename;
+    private final int rotation;
+    private final Map<Direction, HashSet<ModulesContainer>> validBorders = new HashMap<>();
+    private final ModulesConfigFields modulesConfigField;
+    private BorderTags borderTags = new BorderTags(new EnumMap<>(Direction.class));
+    private boolean nothing;
+    private boolean horizontalEdge;
 
     public ModulesContainer(Clipboard clipboard, String clipboardFilename, ModulesConfigFields modulesConfigField, String configFilename, int rotation) {
         this.clipboard = clipboard;
@@ -247,12 +241,10 @@ public class ModulesContainer {
         return moduleMap.get(WeighedProbability.pickWeightedProbability(weightMap));
     }
 
-
     private double getWeight() {
         if (nothing) return 50;
         else return modulesConfigField.getWeight();
     }
-
 
     private void processBorders(Map<String, Object> borderMap) {
         for (Map.Entry<String, Object> entry : borderMap.entrySet()) {

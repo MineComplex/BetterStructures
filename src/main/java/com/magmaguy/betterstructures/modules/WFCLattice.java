@@ -7,50 +7,24 @@ import org.joml.Vector3i;
 
 import java.util.*;
 
+@Getter
 public class WFCLattice {
-    
-    /**
-     * Represents a single collapse decision for backtracking
-     */
-    private static class CollapseDecision {
-        final Vector3i nodePosition;
-        final ModulesContainer chosenModule;
-        final Set<ModulesContainer> previousPossibleStates;
-        final Set<Vector3i> affectedNeighbors;
-        
-        CollapseDecision(Vector3i nodePosition, ModulesContainer chosenModule, 
-                        Set<ModulesContainer> previousPossibleStates, Set<Vector3i> affectedNeighbors) {
-            this.nodePosition = nodePosition;
-            this.chosenModule = chosenModule;
-            this.previousPossibleStates = previousPossibleStates;
-            this.affectedNeighbors = affectedNeighbors;
-        }
-    }
-    private static final Map<Direction, Vector3i> DIRECTION_OFFSETS = new EnumMap<>(Direction.class);
 
-    @Getter private final int latticeRadius;
-    @Getter private final int nodeSizeXZ;
-    @Getter private final int nodeSizeY;
-    @Getter private final int minYLevel;
-    @Getter private final int maxYLevel;
-    @Getter private final Map<Vector3i, WFCNode> nodeMap;
-    @Getter private final PriorityQueue<WFCNode> entropyQueue;
-    
-    // Backtracking system
-    private final Deque<CollapseDecision> decisionStack = new ArrayDeque<>();
+    private static final Map<Direction, Vector3i> DIRECTION_OFFSETS = new EnumMap<>(Direction.class);
 
     static {
         initializeDirectionOffsets();
     }
 
-    private static void initializeDirectionOffsets() {
-        DIRECTION_OFFSETS.put(Direction.NORTH, new Vector3i(0, 0, -1));
-        DIRECTION_OFFSETS.put(Direction.SOUTH, new Vector3i(0, 0, 1));
-        DIRECTION_OFFSETS.put(Direction.EAST, new Vector3i(1, 0, 0));
-        DIRECTION_OFFSETS.put(Direction.WEST, new Vector3i(-1, 0, 0));
-        DIRECTION_OFFSETS.put(Direction.UP, new Vector3i(0, 1, 0));
-        DIRECTION_OFFSETS.put(Direction.DOWN, new Vector3i(0, -1, 0));
-    }
+    private final int latticeRadius;
+    private final int nodeSizeXZ;
+    private final int nodeSizeY;
+    private final int minYLevel;
+    private final int maxYLevel;
+    private final Map<Vector3i, WFCNode> nodeMap;
+    private final PriorityQueue<WFCNode> entropyQueue;
+    // Backtracking system
+    private final Deque<CollapseDecision> decisionStack = new ArrayDeque<>();
 
     public WFCLattice(int latticeRadius, int nodeSizeXZ, int nodeSizeY, int minYLevel, int maxYLevel) {
         this.latticeRadius = latticeRadius;
@@ -64,10 +38,23 @@ public class WFCLattice {
         this.entropyQueue = new PriorityQueue<>(entropyComparator);
     }
 
-    public void initializeLattice(World world, WFCGenerator wfcGenerator){
+    private static void initializeDirectionOffsets() {
+        DIRECTION_OFFSETS.put(Direction.NORTH, new Vector3i(0, 0, -1));
+        DIRECTION_OFFSETS.put(Direction.SOUTH, new Vector3i(0, 0, 1));
+        DIRECTION_OFFSETS.put(Direction.EAST, new Vector3i(1, 0, 0));
+        DIRECTION_OFFSETS.put(Direction.WEST, new Vector3i(-1, 0, 0));
+        DIRECTION_OFFSETS.put(Direction.UP, new Vector3i(0, 1, 0));
+        DIRECTION_OFFSETS.put(Direction.DOWN, new Vector3i(0, -1, 0));
+    }
+
+    public static Vector3i getDirectionOffset(Direction direction) {
+        return new Vector3i(DIRECTION_OFFSETS.get(direction));
+    }
+
+    public void initializeLattice(World world, WFCGenerator wfcGenerator) {
         for (int x = -latticeRadius; x <= latticeRadius; x++) {
             for (int z = -latticeRadius; z <= latticeRadius; z++) {
-                for (int y = minYLevel-1; y <= maxYLevel+1; y++) {
+                for (int y = minYLevel - 1; y <= maxYLevel + 1; y++) {
                     Vector3i gridCoord = new Vector3i(x, y, z);
                     WFCNode node = new WFCNode(gridCoord, world, this, nodeMap, wfcGenerator);
                     nodeMap.put(gridCoord, node);
@@ -90,10 +77,6 @@ public class WFCLattice {
 //                .thenComparingInt(WFCNode::getValidOptionCount);
     }
 
-    public static Vector3i getDirectionOffset(Direction direction) {
-        return new Vector3i(DIRECTION_OFFSETS.get(direction));
-    }
-
     public void updateNodeEntropy(WFCNode node) {
         if (node == null || node.isCollapsed() || node.isBoundary()) {
             return;
@@ -104,7 +87,10 @@ public class WFCLattice {
         for (WFCNode neighbor : node.getOrientedNeighbors().values())
             if (neighbor != null && neighbor.isCollapsed() && !neighbor.isNothing())
                 hasCollapsedNonEmptyNeighbors = true;
-        if (!hasCollapsedNonEmptyNeighbors) return;
+
+        if (!hasCollapsedNonEmptyNeighbors)
+            return;
+
         node.updatePossibleStates();
         entropyQueue.add(node);
     }
@@ -113,24 +99,24 @@ public class WFCLattice {
      * Records a collapse decision for potential backtracking
      */
     public void recordCollapseDecision(WFCNode node, ModulesContainer chosenModule) {
-        Set<ModulesContainer> previousStates = node.getValidOptions() != null ? 
-            new HashSet<>(node.getValidOptions()) : new HashSet<>();
-        
+        Set<ModulesContainer> previousStates = node.getValidOptions() != null ?
+                new HashSet<>(node.getValidOptions()) : new HashSet<>();
+
         Set<Vector3i> affectedNeighbors = new HashSet<>();
         for (WFCNode neighbor : node.getOrientedNeighbors().values()) {
             if (neighbor != null) {
                 affectedNeighbors.add(neighbor.getCellLocation());
             }
         }
-        
+
         decisionStack.push(new CollapseDecision(
-            node.getCellLocation(), 
-            chosenModule, 
-            previousStates, 
-            affectedNeighbors
+                node.getCellLocation(),
+                chosenModule,
+                previousStates,
+                affectedNeighbors
         ));
     }
-    
+
     /**
      * Backtracks to the previous decision, undoing the last collapse
      * @return true if backtracking was successful, false if no decisions to backtrack
@@ -139,24 +125,24 @@ public class WFCLattice {
         if (decisionStack.isEmpty()) {
             return false;
         }
-        
+
         CollapseDecision decision = decisionStack.pop();
         WFCNode node = nodeMap.get(decision.nodePosition);
-        
+
         if (node == null) {
             Logger.warn("Node not found for backtracking at " + decision.nodePosition);
             return false;
         }
-        
+
         // Restore the node's previous state
         node.setModulesContainer(null);
         node.updatePossibleStates();
-        
+
         // Remove the chosen module from possible states if it was the only option
         if (node.getValidOptions() != null && node.getValidOptions().contains(decision.chosenModule)) {
             node.getValidOptions().remove(decision.chosenModule);
         }
-        
+
         // Recalculate entropy for affected neighbors
         for (Vector3i neighborPos : decision.affectedNeighbors) {
             WFCNode neighbor = nodeMap.get(neighborPos);
@@ -164,19 +150,19 @@ public class WFCLattice {
                 updateNodeEntropy(neighbor);
             }
         }
-        
+
         updateNodeEntropy(node);
-        
+
         return true;
     }
-    
+
     /**
      * Gets the number of decisions that can be backtracked
      */
     public int getBacktrackDepth() {
         return decisionStack.size();
     }
-    
+
     /**
      * Clears all backtracking history
      */
@@ -189,7 +175,7 @@ public class WFCLattice {
                 node.getModulesContainer().isNothing();
     }
 
-    private boolean isWorldBoundary(WFCNode node){
+    private boolean isWorldBoundary(WFCNode node) {
         return node.getModulesContainer() != null &&
                 node.getModulesContainer().getClipboardFilename().equals("world_border");
     }
@@ -205,7 +191,6 @@ public class WFCLattice {
         entropyQueue.clear();
         clearBacktrackHistory();
     }
-
 
     public boolean isWithinBounds(Vector3i location) {
         return Math.abs(location.x) <= latticeRadius &&
@@ -256,5 +241,23 @@ public class WFCLattice {
                 latticeCoord.y * nodeSizeY + (nodeSizeY / 2),
                 latticeCoord.z * nodeSizeXZ + (-nodeSizeXZ / 2)
         );
+    }
+
+    /**
+     * Represents a single collapse decision for backtracking
+     */
+    private static class CollapseDecision {
+        final Vector3i nodePosition;
+        final ModulesContainer chosenModule;
+        final Set<ModulesContainer> previousPossibleStates;
+        final Set<Vector3i> affectedNeighbors;
+
+        CollapseDecision(Vector3i nodePosition, ModulesContainer chosenModule,
+                         Set<ModulesContainer> previousPossibleStates, Set<Vector3i> affectedNeighbors) {
+            this.nodePosition = nodePosition;
+            this.chosenModule = chosenModule;
+            this.previousPossibleStates = previousPossibleStates;
+            this.affectedNeighbors = affectedNeighbors;
+        }
     }
 }

@@ -6,16 +6,10 @@ import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.math.BlockVector3;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
 
 public class TerrainAdequacy {
-    public enum ScanType {
-        SURFACE,
-        UNDERGROUND,
-        AIR,
-        LIQUID
-    }
-
     public static double scan(int scanStep, Clipboard schematicClipboard, Location iteratedLocation, Vector schematicOffset, ScanType scanType) {
         int width = schematicClipboard.getDimensions().x();
         int depth = schematicClipboard.getDimensions().z();
@@ -36,34 +30,36 @@ public class TerrainAdequacy {
             }
         }
 
-        double score = 100 - negativeCount * 100D / (double) totalCount;
-
-        return score;
+        return 100 - negativeCount * 100D / (double) totalCount;
     }
 
     private static boolean isBlockAdequate(Location projectedWorldLocation, Material schematicBlockMaterial, int floorHeight, ScanType scanType) {
         int floorYValue = projectedWorldLocation.getBlockY();
-        if (projectedWorldLocation.getBlock().getType().equals(Material.VOID_AIR)) return false;
+        Block block = projectedWorldLocation.getBlock();
+        Material type = block.getType();
+        if (type == Material.VOID_AIR)
+            return false;
+
         switch (scanType) {
             case SURFACE:
                 if (floorYValue > floorHeight)
                     //for air level
-                    return SurfaceMaterials.ignorable(projectedWorldLocation.getBlock().getType()) || !schematicBlockMaterial.isAir();
+                    return SurfaceMaterials.ignorable(type) || !schematicBlockMaterial.isAir();
                 else
                     //for underground level
-                    return !projectedWorldLocation.getBlock().getType().isAir();
+                    return !type.isAir();
             case AIR:
-                return projectedWorldLocation.getBlock().getType().isAir();
+                return type.isAir();
             case UNDERGROUND:
-                return projectedWorldLocation.getBlock().getType().isSolid();
+                return type.isSolid();
             case LIQUID:
                 if (floorYValue > floorHeight) {
                     //for air level
-                    return projectedWorldLocation.getBlock().getType().isAir();
+                    return type.isAir();
                 } else {
                     //for underwater level
                     if (schematicBlockMaterial == Material.WATER || schematicBlockMaterial == Material.LAVA)
-                        return projectedWorldLocation.getBlock().isLiquid();
+                        return block.isLiquid();
                     else
                         return true;
                 }
@@ -71,5 +67,12 @@ public class TerrainAdequacy {
                 return false;
         }
 
+    }
+
+    public enum ScanType {
+        SURFACE,
+        UNDERGROUND,
+        AIR,
+        LIQUID
     }
 }

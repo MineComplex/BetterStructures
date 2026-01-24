@@ -5,7 +5,7 @@ import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import java.util.Arrays;
 
 public class GeneratorSkyGrasslandConfig extends GeneratorConfigFields {
-    public GeneratorSkyGrasslandConfig(){
+    public GeneratorSkyGrasslandConfig() {
         super("generator_sky_grassland", true, Arrays.asList(StructureType.SKY));
         setValidBiomesStrings(Arrays.asList(
                 "minecraft:plains",

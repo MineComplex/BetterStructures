@@ -5,8 +5,6 @@ import com.magmaguy.betterstructures.util.ItemStackSerialization;
 import com.magmaguy.betterstructures.util.WeighedProbability;
 import com.magmaguy.magmacore.util.Logger;
 import lombok.Getter;
-import net.Indyuce.mmoitems.MMOItems;
-import net.Indyuce.mmoitems.api.item.mmoitem.MMOItem;
 import org.bukkit.Material;
 import org.bukkit.block.Container;
 import org.bukkit.configuration.MemorySection;
@@ -40,7 +38,7 @@ public class ChestContents {
 
     private Material getMaterial(String string) {
         try {
-            return Material.getMaterial(string.toUpperCase(Locale.ROOT));
+            return Material.getMaterial(string.toUpperCase());
         } catch (Exception exception) {
             Logger.warn("Invalid material detected! Problematic entry: " + string + " in configuration file " + treasureConfigFields.getFilename());
             return null;
@@ -61,10 +59,11 @@ public class ChestContents {
             double weight = -1;
             List<ChestEntry> chestEntries = null;
             for (Map.Entry<String, Object> innerEntry : ((MemorySection) entry.getValue()).getValues(false).entrySet()) {
-                switch (innerEntry.getKey().toLowerCase(Locale.ROOT)) {
+                switch (innerEntry.getKey().toLowerCase()) {
                     case "weight" -> weight = getWeight(innerEntry.getValue().toString());
                     case "items" -> chestEntries = processEntries((List<Map<String, ?>>) innerEntry.getValue());
-                    default -> Logger.warn("Failed to read key " + innerEntry.getKey() + " for configuration file " + treasureConfigFields.getFilename());
+                    default ->
+                            Logger.warn("Failed to read key " + innerEntry.getKey() + " for configuration file " + treasureConfigFields.getFilename());
                 }
             }
             if (weight > 0 && chestEntries != null) chestRarities.add(new ChestRarity(weight, chestEntries));
@@ -91,19 +90,6 @@ public class ChestContents {
         }
     }
 
-    private ItemStack getMMOItemsItemStack(String string) {
-        try {
-            String[] args = string.split("@");
-            MMOItems mmo = MMOItems.plugin;
-            MMOItem mmoitem = mmo.getMMOItem(mmo.getTypes().get(args[0]), args[1]);
-            if (mmoitem == null) throw new NullPointerException("mmo item is null");
-            return mmoitem.newBuilder().build();
-        } catch (Exception ex) {
-            Logger.warn("Invalid mmo item detected! Problematic entry: " + string + " in " + treasureConfigFields.getFilename());
-            return null;
-        }
-    }
-
     private List<ChestEntry> processEntries(List<Map<String, ?>> rawChestEntries) {
         List<ChestEntry> chestEntries = new ArrayList<>();
         for (Map<String, ?> rawChestEntry : rawChestEntries) {
@@ -115,7 +101,7 @@ public class ChestContents {
             ItemStack itemStack = null;
             for (Map.Entry<String, ?> entry : rawChestEntry.entrySet()) {
                 String value = entry.getValue().toString();
-                switch (entry.getKey().toLowerCase(Locale.ROOT)) {
+                switch (entry.getKey().toLowerCase()) {
                     case "material" -> material = getMaterial(value);
                     case "amount" -> {
                         try {
@@ -133,12 +119,14 @@ public class ChestContents {
                     }
                     case "weight" -> weight = getWeight(value);
                     //Support for MMOItems - og code by Carm
-                    case "mmoitem", "mmoitems" -> itemStack = getMMOItemsItemStack(value);
-                    case "serialized" -> itemStack = getSerializedItemStack((Map<String, Object>) entry.getValue(), value);
-                    case "procedurallygenerateenchantments" -> procedurallyGeneratedEnchantments = getProcedurallyGeneratedEnchantments(value);
+                    case "serialized" ->
+                            itemStack = getSerializedItemStack((Map<String, Object>) entry.getValue(), value);
+                    case "procedurallygenerateenchantments" ->
+                            procedurallyGeneratedEnchantments = getProcedurallyGeneratedEnchantments(value);
                     case "info" -> {
                     }
-                    default -> Logger.warn("Failed to read key " + entry.getKey() + " for configuration file " + treasureConfigFields.getFilename());
+                    default ->
+                            Logger.warn("Failed to read key " + entry.getKey() + " for configuration file " + treasureConfigFields.getFilename());
                 }
             }
             if (material != null || itemStack != null) {

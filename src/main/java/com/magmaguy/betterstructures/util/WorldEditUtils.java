@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,7 +54,7 @@ public class WorldEditUtils {
         for (int i = 1; i < 5; i++) {
             String line = getLine(baseBlock, i);
             if (line == null) return new ArrayList<>();
-            if (!line.isEmpty() && !line.isBlank())
+            if (!line.isBlank())
                 lines.add(line);
         }
 
@@ -157,12 +158,12 @@ public class WorldEditUtils {
 
             @Override
             public BlockVector3 getMinimumPoint() {
-                return BlockVector3.at(0,0,0);
+                return BlockVector3.at(0, 0, 0);
             }
 
             @Override
             public BlockVector3 getMaximumPoint() {
-                return BlockVector3.at(0,0,0);
+                return BlockVector3.at(0, 0, 0);
             }
 
             @Override
@@ -183,17 +184,17 @@ public class WorldEditUtils {
 
             @Override
             public Region getRegion() {
-                return new CuboidRegion(BlockVector3.at(0,0,0), BlockVector3.at(0,0,0));
+                return new CuboidRegion(BlockVector3.at(0, 0, 0), BlockVector3.at(0, 0, 0));
             }
 
             @Override
             public BlockVector3 getDimensions() {
-                return BlockVector3.at(1,1,1);
+                return BlockVector3.at(1, 1, 1);
             }
 
             @Override
             public BlockVector3 getOrigin() {
-                return BlockVector3.at(0,0,0);
+                return BlockVector3.at(0, 0, 0);
             }
 
             @Override
@@ -204,7 +205,7 @@ public class WorldEditUtils {
     }
 
     public static void pasteArmorStandsOnlyFromTransformed(Clipboard transformedClipboard, Location location) {
-        com.sk89q.worldedit.world.World adaptedWorld = BukkitAdapter.adapt(location.getWorld());
+        com.sk89q.worldedit.world.World adaptedWorld = BukkitAdapter.adapt(Objects.requireNonNull(location.getWorld()));
 
         try (EditSession editSession = WorldEdit.getInstance().newEditSession(adaptedWorld)) {
             editSession.setTrackingHistory(false);
@@ -213,7 +214,7 @@ public class WorldEditUtils {
             ClipboardHolder clipboardHolder = new ClipboardHolder(transformedClipboard);
 
             BlockVector3 minPoint = transformedClipboard.getMinimumPoint();
-            BlockVector3 origin   = transformedClipboard.getOrigin();
+            BlockVector3 origin = transformedClipboard.getOrigin();
 
             // Align entities the same way you aligned blocks: min -> base
             BlockVector3 pastePosition = BlockVector3.at(
@@ -232,7 +233,7 @@ public class WorldEditUtils {
                     .build();
 
             Operations.complete(operation);
-            
+
         } catch (Exception e) {
             Logger.warn("Failed to paste entities at " + location + ": " + e.getMessage());
         }

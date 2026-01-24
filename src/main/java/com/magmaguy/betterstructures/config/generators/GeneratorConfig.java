@@ -12,7 +12,7 @@ public class GeneratorConfig extends CustomConfig {
     public GeneratorConfig() {
         super("generators", "com.magmaguy.betterstructures.config.generators.premade", GeneratorConfigFields.class);
         generatorConfigurations.clear();
-        for (String key : super.getCustomConfigFieldsHashMap().keySet()){
+        for (String key : super.getCustomConfigFieldsHashMap().keySet()) {
             generatorConfigurations.put(key, (GeneratorConfigFields) super.getCustomConfigFieldsHashMap().get(key));
         }
     }

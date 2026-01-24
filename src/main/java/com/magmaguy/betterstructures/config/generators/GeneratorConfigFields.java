@@ -11,33 +11,22 @@ import lombok.Setter;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+@Getter
+@Setter
 public class GeneratorConfigFields extends CustomConfigFields {
 
-    @Getter
-    @Setter
     private List<StructureType> structureTypes = new ArrayList<>(List.of(StructureType.UNDEFINED));
-    @Getter
-    @Setter
     private int lowestYLevel = -59;
-    @Getter
-    @Setter
     private int highestYLevel = 320;
-    @Getter
-    @Setter
     private List<String> validWorlds = null;
-    @Getter
-    @Setter
     private List<World.Environment> validWorldEnvironments = null;
-    @Getter
-    @Setter
     private List<String> validBiomesStrings = new ArrayList<>();
-    @Getter
-    @Setter
     private List<String> validBiomesNamespaces = new ArrayList<>();
-    @Getter
-    @Setter
     private String treasureFilename = null;
     @Getter
     private ChestContents chestContents = null;
@@ -144,7 +133,7 @@ public class GeneratorConfigFields extends CustomConfigFields {
         validBiomesNamespaces.addAll(customBiomes);
 
         // If we're creating a new config or updating an existing one, save the full list
-        if (customBiomes.size() > 0) {
+        if (!customBiomes.isEmpty()) {
             List<String> fullBiomeList = new ArrayList<>(validBiomesStrings);
             fullBiomeList.addAll(customBiomes);
             validBiomesStrings = fullBiomeList;
@@ -166,12 +155,12 @@ public class GeneratorConfigFields extends CustomConfigFields {
 
         // If already in namespace:key format, return as is (ensuring lowercase)
         if (biomeString.contains(":")) {
-            return biomeString.toLowerCase(Locale.ROOT);
+            return biomeString.toLowerCase();
         }
 
         // Handle vanilla biomes (convert from enum name to namespace:key format)
         try {
-            Biome biome = Biome.valueOf(biomeString.toUpperCase(Locale.ROOT));
+            Biome biome = Biome.valueOf(biomeString.toUpperCase());
             return "minecraft:" + biome.getKey().getKey();
         } catch (IllegalArgumentException e) {
             Logger.warn("Invalid biome name: " + biomeString);

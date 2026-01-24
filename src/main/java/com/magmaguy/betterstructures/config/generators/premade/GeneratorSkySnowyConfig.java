@@ -5,7 +5,7 @@ import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import java.util.Arrays;
 
 public class GeneratorSkySnowyConfig extends GeneratorConfigFields {
-    public GeneratorSkySnowyConfig(){
+    public GeneratorSkySnowyConfig() {
         super("generator_sky_snowy", true, Arrays.asList(StructureType.SKY));
         setValidBiomesStrings(Arrays.asList(
                 "minecraft:snowy_taiga",

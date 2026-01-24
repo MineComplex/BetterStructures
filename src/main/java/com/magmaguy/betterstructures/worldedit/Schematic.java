@@ -20,6 +20,7 @@ import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
+import lombok.experimental.UtilityClass;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -30,18 +31,19 @@ import org.bukkit.util.Vector;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 
+@UtilityClass
 public class Schematic {
     // Queue to hold pending paste operations
-    private static final Queue<PasteBlockOperation> pasteQueue = new ConcurrentLinkedQueue<>();
-    private static boolean erroredOnce = false;
-    private static boolean isDistributedPasting = false;
-
-    private Schematic() {
-    }
+    private final Queue<PasteBlockOperation> pasteQueue = new ConcurrentLinkedQueue<>();
+    private boolean erroredOnce;
+    private boolean isDistributedPasting;
 
     /**
      * Loads a schematic from a file
@@ -49,7 +51,7 @@ public class Schematic {
      * @param schematicFile The schematic file to load
      * @return The loaded clipboard or null if loading failed
      */
-    public static Clipboard load(File schematicFile) {
+    public Clipboard load(File schematicFile) {
         Clipboard clipboard;
 
         ClipboardFormat format = ClipboardFormats.findByFile(schematicFile);
@@ -65,9 +67,12 @@ public class Schematic {
             return null;
         } catch (Exception e) {
             Logger.warn("Failed to load schematic " + schematicFile.getName() + " ! 99% of the time, this is because you are not using the correct WorldEdit version for your Minecraft server. You should be downloading WorldEdit from here https://dev.bukkit.org/projects/worldedit . You can check which versions the download links are compatible with by hovering over them.");
-            erroredOnce = true;
-            if (!erroredOnce) e.printStackTrace();
-            else Logger.warn("Hiding stacktrace for this error, as it has already been printed once");
+            if (!erroredOnce) {
+                e.printStackTrace();
+                erroredOnce = true;
+            } else {
+                Logger.warn("Hiding stacktrace for this error, as it has already been printed once");
+            }
             return null;
         }
         return clipboard;
@@ -79,7 +84,7 @@ public class Schematic {
      * @param clipboard The WorldEdit clipboard containing the schematic
      * @param location  The location to paste at
      */
-    public static void paste(Clipboard clipboard, Location location) {
+    public void paste(Clipboard clipboard, Location location) {
         World world = BukkitAdapter.adapt(location.getWorld());
         try (EditSession editSession = WorldEdit.getInstance().newEditSession(world)) {
             Operation operation = new ClipboardHolder(clipboard)
@@ -102,7 +107,7 @@ public class Schematic {
      * @param pedestalMaterialProvider Function that provides pedestal material based on whether it's a surface block
      * @return List of paste blocks
      */
-    private static List<PasteBlock> createPasteBlocks(
+    private List<PasteBlock> createPasteBlocks(
             Clipboard schematicClipboard,
             Location location,
             Vector schematicOffset,
@@ -120,19 +125,23 @@ public class Schematic {
                             y + schematicClipboard.getMinimumPoint().y(),
                             z + schematicClipboard.getMinimumPoint().z());
                     BaseBlock baseBlock = schematicClipboard.getFullBlock(adjustedClipboardLocation);
+                    Material material = BukkitAdapter.adapt(baseBlock.getBlockType());
+                    // special behavior: do not replace barriers, so do nothing
+                    if (material == Material.BARRIER) {
+                        continue;
+                    }
+
                     BlockState blockState = baseBlock.toImmutableState();
                     BlockData blockData = Bukkit.createBlockData(baseBlock.toImmutableState().getAsString());
-                    Material material = BukkitAdapter.adapt(baseBlock.getBlockType());
-                    Block worldBlock = adjustedLocation.clone().add(new Vector(x, y, z)).getBlock();
-                    String materialString = material.toString().toUpperCase(Locale.ROOT);
+
+                    Block worldBlock = adjustedLocation.clone().add(x, y, z).getBlock();
+                    String materialString = material.toString().toUpperCase();
                     boolean isGround = !BukkitAdapter.adapt(schematicClipboard.getBlock(
                             BlockVector3.at(adjustedClipboardLocation.x(),
                                     adjustedClipboardLocation.y() + 1,
                                     adjustedClipboardLocation.z())).getBlockType()).isSolid();
 
-                    if (material == Material.BARRIER) {
-                        // special behavior: do not replace barriers, so do nothing
-                    } else if (materialString.endsWith("SIGN") ||
+                    if (materialString.endsWith("SIGN") ||
                             materialString.endsWith("STAIRS") ||
                             materialString.endsWith("BOX") ||
                             materialString.endsWith("CHEST_BOAT") ||
@@ -196,7 +205,7 @@ public class Schematic {
      * @param pedestalMaterialProvider Function that provides pedestal material based on whether it's a surface block
      * @param onComplete Callback to run when paste is complete
      */
-    public static void pasteSchematic(
+    public void pasteSchematic(
             Clipboard schematicClipboard,
             Location location,
             Vector schematicOffset,
@@ -221,7 +230,7 @@ public class Schematic {
      * @param location    The location to paste at
      * @param onComplete  Optional callback to run when paste is complete
      */
-    public static void pasteDistributed(List<PasteBlock> pasteBlocks, Location location, Runnable onComplete) {
+    public void pasteDistributed(List<PasteBlock> pasteBlocks, Location location, Runnable onComplete) {
         // Add this paste operation to the queue
         pasteQueue.add(new PasteBlockOperation(pasteBlocks, location, onComplete));
 
@@ -234,7 +243,7 @@ public class Schematic {
     /**
      * Processes the next paste operation in the queue
      */
-    private static void processNextPaste() {
+    private void processNextPaste() {
         if (pasteQueue.isEmpty()) {
             isDistributedPasting = false;
             return;

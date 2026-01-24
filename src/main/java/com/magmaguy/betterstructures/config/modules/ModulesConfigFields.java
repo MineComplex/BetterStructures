@@ -16,6 +16,7 @@ import java.util.UUID;
 
 public class ModulesConfigFields extends CustomConfigFields {
 
+    private final UUID uuid = UUID.randomUUID();
     @Setter
     private String treasureFile = null;
     @Setter
@@ -36,15 +37,15 @@ public class ModulesConfigFields extends CustomConfigFields {
     @Getter
     private String cloneConfig = "";
     private ModulesConfigFields clonedConfig = null;
-    private boolean northIsPassable = true;
-    private boolean southIsPassable = true;
-    private boolean eastIsPassable = true;
-    private boolean westIsPassable = true;
-    private boolean upIsPassable = true;
-    private boolean downIsPassable = true;
-    private UUID uuid = UUID.randomUUID();
     private String compoundModule = null;
     private boolean isAutomaticallyPlaced = true;
+
+    /**
+     * Used by plugin-generated files (defaults)
+     */
+    public ModulesConfigFields(String filename, boolean isEnabled) {
+        super(filename, isEnabled);
+    }
 
     //used to check if a config is either cloned or the same between two modules
     public UUID getUuid() {
@@ -53,16 +54,6 @@ public class ModulesConfigFields extends CustomConfigFields {
 
     public String getCompoundModule() {
         return clonedConfig == null ? compoundModule : clonedConfig.getCompoundModule();
-    }
-
-    /**
-     * Used by plugin-generated files (defaults)
-     *
-     * @param filename
-     * @param isEnabled
-     */
-    public ModulesConfigFields(String filename, boolean isEnabled) {
-        super(filename, isEnabled);
     }
 
     public String getTreasureFile() {
@@ -103,30 +94,6 @@ public class ModulesConfigFields extends CustomConfigFields {
 
     public double getRepetitionPenalty() {
         return clonedConfig == null ? repetitionPenalty : clonedConfig.getRepetitionPenalty();
-    }
-
-    public boolean isNorthIsPassable() {
-        return clonedConfig == null ? northIsPassable : clonedConfig.isNorthIsPassable();
-    }
-
-    public boolean isSouthIsPassable() {
-        return clonedConfig == null ? southIsPassable : clonedConfig.isSouthIsPassable();
-    }
-
-    public boolean isEastIsPassable() {
-        return clonedConfig == null ? eastIsPassable : clonedConfig.isEastIsPassable();
-    }
-
-    public boolean isWestIsPassable() {
-        return clonedConfig == null ? westIsPassable : clonedConfig.isWestIsPassable();
-    }
-
-    public boolean isUpIsPassable() {
-        return clonedConfig == null ? upIsPassable : clonedConfig.isUpIsPassable();
-    }
-
-    public boolean isDownIsPassable() {
-        return clonedConfig == null ? downIsPassable : clonedConfig.isDownIsPassable();
     }
 
     public boolean isAutomaticallyPlaced() {
@@ -173,7 +140,7 @@ public class ModulesConfigFields extends CustomConfigFields {
             Logger.warn("Configuration " + filename + " is supposed to clone " + clonedConfig + " but that is not a valid configuration file! The cloning setting will be ignored.");
             return;
         }
-//        else            Logger.info("Cloned " + filename + " into " + clonedConfig.getFilename());
+
         fileConfiguration.set("treasureFile", null);
         fileConfiguration.set("borders", null);
         fileConfiguration.set("minY", null);

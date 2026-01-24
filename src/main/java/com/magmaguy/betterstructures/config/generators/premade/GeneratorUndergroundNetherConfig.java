@@ -6,7 +6,7 @@ import org.bukkit.World;
 import java.util.Arrays;
 
 public class GeneratorUndergroundNetherConfig extends GeneratorConfigFields {
-    public GeneratorUndergroundNetherConfig(){
+    public GeneratorUndergroundNetherConfig() {
         super("generator_underground_nether", true, Arrays.asList(StructureType.UNDERGROUND_DEEP, StructureType.UNDERGROUND_SHALLOW));
         setValidWorldEnvironments(Arrays.asList(World.Environment.NETHER));
         setTreasureFilename("treasure_nether.yml");

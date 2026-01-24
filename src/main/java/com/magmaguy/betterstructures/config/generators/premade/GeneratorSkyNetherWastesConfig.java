@@ -5,12 +5,12 @@ import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import java.util.Arrays;
 
 public class GeneratorSkyNetherWastesConfig extends GeneratorConfigFields {
-    public GeneratorSkyNetherWastesConfig(){
+    public GeneratorSkyNetherWastesConfig() {
         super("generator_sky_nether_wastes", true, Arrays.asList(StructureType.SKY));
         setValidBiomesStrings(Arrays.asList(
                 "minecraft:nether_wastes",
                 "minecraft:custom"
-                ));
+        ));
         setTreasureFilename("treasure_nether.yml");
     }
 }

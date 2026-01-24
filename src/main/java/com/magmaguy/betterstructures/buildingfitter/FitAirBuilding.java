@@ -8,7 +8,6 @@ import com.magmaguy.betterstructures.util.WorldEditUtils;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.util.Vector;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -29,21 +28,16 @@ public class FitAirBuilding extends FitAnything {
 
     private void scan(Chunk chunk) {
         //The 8 offset on x and y is to center the anchor on the chunk, the system adds 100 blocks
-        int altitude = 0;
-        switch (chunk.getWorld().getEnvironment()) {
-            case NORMAL:
-            case CUSTOM:
-                altitude = ThreadLocalRandom.current().nextInt(DefaultConfig.getNormalCustomAirBuildingMinAltitude(), DefaultConfig.getNormalCustomAirBuildingMaxAltitude() + 1);
-                break;
-            case NETHER:
+        int altitude = switch (chunk.getWorld().getEnvironment()) {
+            case NORMAL, CUSTOM ->
+                    ThreadLocalRandom.current().nextInt(DefaultConfig.getNormalCustomAirBuildingMinAltitude(), DefaultConfig.getNormalCustomAirBuildingMaxAltitude() + 1);
+            case NETHER ->
                 //this is dealt with later
-                altitude = 0;
-                break;
-            case THE_END:
-                altitude = ThreadLocalRandom.current().nextInt(DefaultConfig.getEndAirBuildMinAltitude(), DefaultConfig.getEndAirBuildMinAltitude() + 1);
-                break;
-        }
-        Location originalLocation = chunk.getWorld().getHighestBlockAt(chunk.getX() * 16 + 8, chunk.getZ() * 16 + 8).getLocation().add(new Vector(0, altitude, 0));
+                    0;
+            case THE_END ->
+                    ThreadLocalRandom.current().nextInt(DefaultConfig.getEndAirBuildMinAltitude(), DefaultConfig.getEndAirBuildMinAltitude() + 1);
+        };
+        Location originalLocation = chunk.getWorld().getHighestBlockAt(chunk.getX() * 16 + 8, chunk.getZ() * 16 + 8).getLocation().add(0, altitude, 0);
 
         switch (chunk.getWorld().getEnvironment()) {
             case CUSTOM:
@@ -67,15 +61,14 @@ public class FitAirBuilding extends FitAnything {
                             streak = true;
                         }
                     } else {
-                        if (currentLocation.getBlock().getType() == Material.VOID_AIR ||
-                                currentLocation.getBlock().getType() == Material.BEDROCK ||
+                        Material type = currentLocation.getBlock().getType();
+                        if (type == Material.VOID_AIR || type == Material.BEDROCK ||
                                 tolerance == 0) {
                             if (streak) {
                                 streak = false;
                                 if (highPoint - lowPoint >= 40)
                                     break;
-                                if (currentLocation.getBlock().getType() == Material.VOID_AIR ||
-                                        currentLocation.getBlock().getType() == Material.BEDROCK)
+                                if (type == Material.VOID_AIR || type == Material.BEDROCK)
                                     return;
                                 tolerance = 3;
                             }
@@ -127,7 +120,7 @@ public class FitAirBuilding extends FitAnything {
     }
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {
-        Location iteratedLocation = originalLocation.clone().add(new Vector(chunkX * 16, 0, chunkZ * 16));
+        Location iteratedLocation = originalLocation.clone().add(chunkX * 16, 0, chunkZ * 16);
         double newScore = TerrainAdequacy.scan(scanStep, schematicClipboard, iteratedLocation, schematicOffset, TerrainAdequacy.ScanType.AIR);
         if (newScore == startingScore) location = iteratedLocation;
     }

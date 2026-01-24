@@ -1,11 +1,7 @@
 package com.magmaguy.betterstructures.listeners;
 
 import com.magmaguy.betterstructures.MetadataHandler;
-import com.magmaguy.betterstructures.buildingfitter.FitAirBuilding;
-import com.magmaguy.betterstructures.buildingfitter.FitLiquidBuilding;
-import com.magmaguy.betterstructures.buildingfitter.FitSurfaceBuilding;
-import com.magmaguy.betterstructures.buildingfitter.FitUndergroundShallowBuilding;
-import com.magmaguy.betterstructures.buildingfitter.util.FitUndergroundDeepBuilding;
+import com.magmaguy.betterstructures.buildingfitter.*;
 import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.config.ValidWorldsConfig;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
@@ -28,21 +24,28 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class NewChunkLoadEvent implements Listener {
 
-    private static HashSet<Chunk> loadingChunks = new HashSet<>();
+    private static final HashSet<Chunk> loadingChunks = new HashSet<>();
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent event) {
-        if (!event.isNewChunk()) return;
-        if (loadingChunks.contains(event.getChunk())) return;
+        if (!event.isNewChunk())
+            return;
+
+        if (!ValidWorldsConfig.isValidWorld(event.getWorld()))
+            return;
+
+        if (loadingChunks.contains(event.getChunk()))
+            return;
+
         //In some cases the same chunk gets loaded (at least at an event level) several times, this prevents the plugin from doing multiple scans and placing multiple builds, enhancing performance
         loadingChunks.add(event.getChunk());
+
         new BukkitRunnable() {
             @Override
             public void run() {
                 loadingChunks.remove(event.getChunk());
             }
         }.runTaskLater(MetadataHandler.PLUGIN, 20L);
-        if (!ValidWorldsConfig.isValidWorld(event.getWorld())) return;
 
         surfaceScanner(event.getChunk());
         shallowUndergroundScanner(event.getChunk());
@@ -69,7 +72,7 @@ public class NewChunkLoadEvent implements Listener {
         long worldSeed = chunk.getWorld().getSeed();
 
         // Create a unique seed for each structure type
-        long typeSeed = worldSeed + structureType.name().hashCode() * 7919; // Use a prime number for better distribution
+        long typeSeed = worldSeed + structureType.name().hashCode() * 7919L; // Use a prime number for better distribution
 
         // Check all nearby grid cells that could have a structure landing on this chunk
         for (int gridX = (x - maxOffset) / gridDistance - 1; gridX <= (x + maxOffset) / gridDistance + 1; gridX++) {
@@ -84,7 +87,7 @@ public class NewChunkLoadEvent implements Listener {
                 }
 
                 // Create a seeded random for this specific grid cell
-                Random cellRandom = new Random(typeSeed ^ (((long)baseX << 32) | (baseZ & 0xFFFFFFFFL)));
+                Random cellRandom = new Random(typeSeed ^ (((long) baseX << 32) | (baseZ & 0xFFFFFFFFL)));
 
                 // Generate the random offset for structure in this grid cell
                 int offsetX = maxOffset > 0 ? cellRandom.nextInt(maxOffset * 2 + 1) - maxOffset : 0;
@@ -105,53 +108,78 @@ public class NewChunkLoadEvent implements Listener {
     }
 
     private void surfaceScanner(Chunk chunk) {
-        if (SchematicContainer.getSchematics().get(GeneratorConfigFields.StructureType.SURFACE).isEmpty()) return;
+        if (SchematicContainer.getSchematics().get(GeneratorConfigFields.StructureType.SURFACE).isEmpty())
+            return;
+
         // Get config values directly instead of using static finals
         if (!isValidStructurePosition(chunk, GeneratorConfigFields.StructureType.SURFACE,
-                DefaultConfig.getDistanceSurface(), DefaultConfig.getMaxOffsetSurface())) return;
+                DefaultConfig.getDistanceSurface(), DefaultConfig.getMaxOffsetSurface()))
+            return;
+
         new FitSurfaceBuilding(chunk);
     }
 
     private void shallowUndergroundScanner(Chunk chunk) {
-        if (SchematicContainer.getSchematics().get(GeneratorConfigFields.StructureType.UNDERGROUND_SHALLOW).isEmpty()) return;
+        if (SchematicContainer.getSchematics().get(GeneratorConfigFields.StructureType.UNDERGROUND_SHALLOW).isEmpty())
+            return;
+
         if (!isValidStructurePosition(chunk, GeneratorConfigFields.StructureType.UNDERGROUND_SHALLOW,
-                DefaultConfig.getDistanceShallow(), DefaultConfig.getMaxOffsetShallow())) return;
+                DefaultConfig.getDistanceShallow(), DefaultConfig.getMaxOffsetShallow()))
+            return;
+
         FitUndergroundShallowBuilding.fit(chunk);
     }
 
     private void deepUndergroundScanner(Chunk chunk) {
-        if (SchematicContainer.getSchematics().get(GeneratorConfigFields.StructureType.UNDERGROUND_DEEP).isEmpty()) return;
+        if (SchematicContainer.getSchematics().get(GeneratorConfigFields.StructureType.UNDERGROUND_DEEP).isEmpty())
+            return;
         if (!isValidStructurePosition(chunk, GeneratorConfigFields.StructureType.UNDERGROUND_DEEP,
-                DefaultConfig.getDistanceDeep(), DefaultConfig.getMaxOffsetDeep())) return;
+                DefaultConfig.getDistanceDeep(), DefaultConfig.getMaxOffsetDeep()))
+            return;
+
         FitUndergroundDeepBuilding.fit(chunk);
     }
 
     private void skyScanner(Chunk chunk) {
         if (SchematicContainer.getSchematics().get(GeneratorConfigFields.StructureType.SKY).isEmpty()) return;
         if (!isValidStructurePosition(chunk, GeneratorConfigFields.StructureType.SKY,
-                DefaultConfig.getDistanceSky(), DefaultConfig.getMaxOffsetSky())) return;
+                DefaultConfig.getDistanceSky(), DefaultConfig.getMaxOffsetSky()))
+            return;
+
         new FitAirBuilding(chunk);
     }
 
     private void liquidSurfaceScanner(Chunk chunk) {
-        if (SchematicContainer.getSchematics().get(GeneratorConfigFields.StructureType.LIQUID_SURFACE).isEmpty()) return;
+        if (SchematicContainer.getSchematics().get(GeneratorConfigFields.StructureType.LIQUID_SURFACE).isEmpty())
+            return;
         if (!isValidStructurePosition(chunk, GeneratorConfigFields.StructureType.LIQUID_SURFACE,
-                DefaultConfig.getDistanceLiquid(), DefaultConfig.getMaxOffsetLiquid())) return;
+                DefaultConfig.getDistanceLiquid(), DefaultConfig.getMaxOffsetLiquid()))
+            return;
+
         new FitLiquidBuilding(chunk);
     }
 
     private void dungeonScanner(Chunk chunk) {
-        if (ModuleGeneratorsConfig.getModuleGenerators().isEmpty()) return;
+        if (ModuleGeneratorsConfig.getModuleGenerators().isEmpty())
+            return;
+
         if (!isValidStructurePosition(chunk, GeneratorConfigFields.StructureType.DUNGEON,
-                DefaultConfig.getDistanceDungeon(), DefaultConfig.getMaxOffsetDungeon())) return;
+                DefaultConfig.getDistanceDungeon(), DefaultConfig.getMaxOffsetDungeon()))
+            return;
+
         List<ModuleGeneratorsConfigFields> validatedGenerators = new ArrayList<>();
-        for (ModuleGeneratorsConfigFields moduleGeneratorsConfigFields : ModuleGeneratorsConfig.getModuleGenerators().values()){
-            if (moduleGeneratorsConfigFields.getValidWorlds() != null && !moduleGeneratorsConfigFields.getValidWorlds().isEmpty() && !moduleGeneratorsConfigFields.getValidWorlds().contains(chunk.getWorld().getName())) continue;
-            if (moduleGeneratorsConfigFields.getValidWorldEnvironments() != null && !moduleGeneratorsConfigFields.getValidWorldEnvironments().isEmpty() && !moduleGeneratorsConfigFields.getValidWorldEnvironments().contains(chunk.getWorld().getEnvironment())) continue;
+        for (ModuleGeneratorsConfigFields moduleGeneratorsConfigFields : ModuleGeneratorsConfig.getModuleGenerators().values()) {
+            if (moduleGeneratorsConfigFields.getValidWorlds() != null && !moduleGeneratorsConfigFields.getValidWorlds().isEmpty() && !moduleGeneratorsConfigFields.getValidWorlds().contains(chunk.getWorld().getName()))
+                continue;
+            if (moduleGeneratorsConfigFields.getValidWorldEnvironments() != null && !moduleGeneratorsConfigFields.getValidWorldEnvironments().isEmpty() && !moduleGeneratorsConfigFields.getValidWorldEnvironments().contains(chunk.getWorld().getEnvironment()))
+                continue;
             validatedGenerators.add(moduleGeneratorsConfigFields);
         }
-        if (validatedGenerators.isEmpty()) return;
+
+        if (validatedGenerators.isEmpty())
+            return;
+
         ModuleGeneratorsConfigFields moduleGeneratorsConfigFields = validatedGenerators.get(ThreadLocalRandom.current().nextInt(0, ModuleGeneratorsConfig.getModuleGenerators().size()));
-        new WFCGenerator(moduleGeneratorsConfigFields, chunk.getBlock(8,moduleGeneratorsConfigFields.getCenterModuleAltitude(),8).getLocation());
+        new WFCGenerator(moduleGeneratorsConfigFields, chunk.getBlock(8, moduleGeneratorsConfigFields.getCenterModuleAltitude(), 8).getLocation());
     }
 }

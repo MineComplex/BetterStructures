@@ -7,14 +7,9 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.joml.Vector3i;
 
-import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
@@ -26,24 +21,19 @@ import static com.magmaguy.betterstructures.modules.ModulesContainer.pickWeighte
 public class WFCGenerator {
     public static HashSet<WFCGenerator> wfcGenerators = new HashSet<>();
     @Getter
+    private final Location startLocation;
+    @Getter
     private ModuleGeneratorsConfigFields moduleGeneratorsConfigFields;
-
     @Getter
     private WFCLattice spatialGrid;
     private Player player = null;
     private String startingModule;
     @Getter
     private World world;
-    @Getter
-    private Location startLocation = null;
     private volatile boolean isGenerating;
     private volatile boolean isCancelled;
-    private File worldFolder;
-    private String worldName;
+
     private int rollbackCounter = 0;
-    private BossBar progressBar;
-    private int totalNodes = 0;
-    private int completedNodes = 0;
 
     public WFCGenerator(ModuleGeneratorsConfigFields moduleGeneratorsConfigFields, Player player) {
         this.player = player;
@@ -57,58 +47,9 @@ public class WFCGenerator {
         initialize(moduleGeneratorsConfigFields);
     }
 
-    public static void generateFromConfig(ModuleGeneratorsConfigFields generatorsConfigFields, Player player) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (generatorsConfigFields.isWorldGeneration()) {
-                    String baseWorldName = generatorsConfigFields.getFilename().replace(".yml", "");
-                    File worldContainer = Bukkit.getWorldContainer();
-                    int i = 0;
-
-                    // Increment until a unique world name is found
-                    String worldName;
-                    worldName = baseWorldName + "_" + i;
-                    File worldFolder = new File(worldContainer, worldName);
-                    while (worldFolder.exists()) {
-                        worldName = baseWorldName + "_" + i;
-                        i++;
-                        worldFolder = new File(worldContainer, worldName);
-                    }
-
-                } else {
-                    new WFCGenerator(generatorsConfigFields, player);
-                }
-            }
-        }.runTaskAsynchronously(MetadataHandler.PLUGIN);
-    }
-
     public static void shutdown() {
         wfcGenerators.forEach(WFCGenerator::cancel);
         wfcGenerators.clear();
-    }
-
-    private void initializeProgressBar() {
-        if (player != null) {
-            progressBar = Bukkit.createBossBar("Generating Structure...", BarColor.BLUE, BarStyle.SOLID);
-            progressBar.addPlayer(player);
-            progressBar.setProgress(0.0);
-        }
-    }
-
-    private void updateProgressBar(String message) {
-        if (progressBar != null && totalNodes > 0) {
-            double progress = (double) completedNodes / totalNodes;
-            progressBar.setProgress(Math.min(progress, 1.0));
-            progressBar.setTitle(message);
-        }
-    }
-
-    private void removeProgressBar() {
-        if (progressBar != null) {
-            progressBar.removeAll();
-            progressBar = null;
-        }
     }
 
     private void initialize(ModuleGeneratorsConfigFields moduleGeneratorsConfigFields) {
@@ -116,56 +57,28 @@ public class WFCGenerator {
         this.spatialGrid = new WFCLattice(moduleGeneratorsConfigFields.getRadius(), moduleGeneratorsConfigFields.getModuleSizeXZ(), moduleGeneratorsConfigFields.getModuleSizeY(), moduleGeneratorsConfigFields.getMinChunkY(), moduleGeneratorsConfigFields.getMaxChunkY());
         wfcGenerators.add(this);
 
-        // Calculate total nodes for progress tracking
-        int radius = moduleGeneratorsConfigFields.getRadius();
-        int minY = moduleGeneratorsConfigFields.getMinChunkY();
-        int maxY = moduleGeneratorsConfigFields.getMaxChunkY();
-        totalNodes = (radius * 2 + 1) * (radius * 2 + 1) * (maxY - minY + 1);
-
         List<String> startModules = moduleGeneratorsConfigFields.getStartModules();
         if (startModules.isEmpty()) {
-            if (player != null) player.sendMessage("No start modules exist, you need to install or make modules first!");
+            if (player != null)
+                player.sendMessage("No start modules exist, you need to install or make modules first!");
             Logger.warn("No start modules exist, you need to install or make modules first!");
             cancel();
             return;
         }
         this.startingModule = startModules.get(ThreadLocalRandom.current().nextInt(moduleGeneratorsConfigFields.getStartModules().size())) + "_rotation_0";
 
-        if (moduleGeneratorsConfigFields.isWorldGeneration()) {
-            String baseWorldName = moduleGeneratorsConfigFields.getFilename().replace(".yml", "");
-            File worldContainer = Bukkit.getWorldContainer();
-            int i = 0;
-
-            // Increment until a unique world name is found
-            String worldName;
-            worldName = baseWorldName + "_" + i;
-            File worldFolder = new File(worldContainer, worldName);
-            while (worldFolder.exists()) {
-                worldName = baseWorldName + "_" + i;
-                i++;
-                worldFolder = new File(worldContainer, worldName);
-            }
-        }
-
-        initializeProgressBar();
         reserveChunks();
     }
 
     private void reserveChunks() {
-        updateProgressBar("Initializing lattice...");
-        if (moduleGeneratorsConfigFields.isWorldGeneration()) {
-            this.world = WorldInitializer.generateWorld(worldName, player);
-        } else {
-            this.world = startLocation.getWorld();
-        }
+        this.world = startLocation.getWorld();
 
         spatialGrid.initializeLattice(world, this);
         startArrangingModules();
     }
 
     private void startArrangingModules() {
-        updateProgressBar("Starting generation...");
-        new InitializeGenerationTask().runTaskAsynchronously(MetadataHandler.PLUGIN);
+        Bukkit.getScheduler().runTaskAsynchronously(MetadataHandler.PLUGIN, () -> start(startingModule));
     }
 
     private void start(String startingModule) {
@@ -173,8 +86,6 @@ public class WFCGenerator {
             return;
         }
         isGenerating = true;
-
-        updateProgressBar("Collapsing initial node...");
 
         try {
             WFCNode startChunk = createStartChunk(startingModule);
@@ -201,12 +112,10 @@ public class WFCGenerator {
         }
 
         paste(startCell, modulesContainer);
-        completedNodes++;
         return startCell;
     }
 
     private void generateFast() {
-        updateProgressBar("Propagating constraints...");
         while (!isCancelled) {
             WFCNode nextCell = spatialGrid.getLowestEntropyNode();
             if (nextCell == null) {
@@ -229,39 +138,28 @@ public class WFCGenerator {
     private void generateNextChunk(WFCNode gridCell) {
         HashSet<ModulesContainer> validOptions = gridCell.getValidOptions();
         if (validOptions == null || validOptions.isEmpty()) {
-            updateProgressBar("Backtracking...");
-            org.bukkit.Location targetLocation = gridCell.getRealCenterLocation();
-//            if (player != null)
-//                player.spigot().sendMessage(Logger.commandHoverMessage("Rolling back cell at " + gridCell.getCellLocation(), "Click to teleport", "tp " + targetLocation.getX() + " " + targetLocation.getY() + " " + targetLocation.getZ()));
             rollbackChunk();
             return;
         }
 
         ModulesContainer modulesContainer = pickWeightedRandomModule(validOptions, gridCell);
         if (modulesContainer == null) {
-            updateProgressBar("Backtracking...");
             rollbackChunk();
             return;
         }
 
         paste(gridCell, modulesContainer);
-        completedNodes++;
-        updateProgressBar("Generating... (" + completedNodes + "/" + totalNodes + ")");
     }
 
     private void rollbackChunk() {
         // Use proper backtracking instead of just resetting
-        if (spatialGrid.backtrack()) {
-            updateProgressBar("Backtracking... (" + spatialGrid.getBacktrackDepth() + " decisions remaining)");
-        } else {
-            updateProgressBar("Generation failed - no decisions to backtrack");
+        if (!spatialGrid.backtrack()) {
             cancel();
             return;
         }
 
         rollbackCounter++;
         if (rollbackCounter > 1000) {
-            updateProgressBar("Generation failed - exceeded backtrack limit");
             Logger.warn("Exceeded backtrack limit!");
             cancel();
             //retry
@@ -271,7 +169,6 @@ public class WFCGenerator {
     }
 
     private void done() {
-        updateProgressBar("Generation complete!");
         if (player != null) {
             player.sendMessage("Done assembling!");
             player.sendMessage("It will take a moment to paste the structure, and will require relogging.");
@@ -279,13 +176,11 @@ public class WFCGenerator {
         isGenerating = false;
         instantPaste();
         spatialGrid.clearGenerationData();
-        removeProgressBar();
     }
 
     private void cleanup() {
         spatialGrid.clearAllData();
         wfcGenerators.remove(this);
-        removeProgressBar();
     }
 
     /**
@@ -293,7 +188,6 @@ public class WFCGenerator {
      */
     public void cancel() {
         isCancelled = true;
-        removeProgressBar();
     }
 
     private void instantPaste() {
@@ -311,15 +205,9 @@ public class WFCGenerator {
             }
         }
 
-        new ModulePasting(world, worldFolder, orderedPasteDeque, moduleGeneratorsConfigFields.getSpawnPoolSuffix(), startLocation, moduleGeneratorsConfigFields);
+        new ModulePasting(world, orderedPasteDeque, moduleGeneratorsConfigFields.getSpawnPoolSuffix(), startLocation, moduleGeneratorsConfigFields);
 
         cleanup();
     }
 
-    private class InitializeGenerationTask extends BukkitRunnable {
-        @Override
-        public void run() {
-            start(startingModule);
-        }
-    }
 }

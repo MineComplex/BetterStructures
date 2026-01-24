@@ -13,34 +13,17 @@ import org.bukkit.Material;
 
 import java.io.IOException;
 
+@Getter
+@Setter
 public class SchematicConfigField extends CustomConfigFields {
 
-    @Getter
-    @Setter
     private double weight = 1;
-    @Getter
-    @Setter
     private String generatorConfigFilename = "";
-    @Getter
-    @Setter
     private GeneratorConfigFields generatorConfigFields;
-    @Getter
-    @Setter
-    private Material pedestalMaterial = null;
-    @Getter
-    @Setter
-    private String treasureFile = null;
-    @Getter
-    @Setter
-    private ChestContents chestContents = null;
+    private Material pedestalMaterial;
+    private String treasureFile;
+    private ChestContents chestContents;
 
-
-    /**
-     * Used by plugin-generated files (defaults)
-     *
-     * @param filename
-     * @param isEnabled
-     */
     public SchematicConfigField(String filename, boolean isEnabled) {
         super(filename, isEnabled);
     }

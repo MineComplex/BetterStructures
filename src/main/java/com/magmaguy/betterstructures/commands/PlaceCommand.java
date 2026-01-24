@@ -18,11 +18,11 @@ public class PlaceCommand extends AdvancedCommand {
         ArrayList<String> loadedSchematics = new ArrayList<>();
         SchematicContainer.getSchematics().values().forEach(schematicContainer -> loadedSchematics.add(schematicContainer.getClipboardFilename()));
         addArgument("schematic", new ListStringCommandArgument(loadedSchematics, "<schematic>"));
-        addArgument("type", new ListStringCommandArgument(List.of(GeneratorConfigFields.StructureType.SURFACE.toString(), GeneratorConfigFields.StructureType.UNDERGROUND_SHALLOW.toString(), GeneratorConfigFields.StructureType.UNDERGROUND_DEEP.toString(), GeneratorConfigFields.StructureType.SKY.toString(), GeneratorConfigFields.StructureType.LIQUID_SURFACE.toString()),"<type>"));
+        addArgument("type", new ListStringCommandArgument(List.of(GeneratorConfigFields.StructureType.SURFACE.toString(), GeneratorConfigFields.StructureType.UNDERGROUND_SHALLOW.toString(), GeneratorConfigFields.StructureType.UNDERGROUND_DEEP.toString(), GeneratorConfigFields.StructureType.SKY.toString(), GeneratorConfigFields.StructureType.LIQUID_SURFACE.toString()), "<type>"));
         setPermission("betterstructures.*");
         setDescription("Allows players to place structures.");
         setSenderType(SenderType.PLAYER);
-        setUsage("/betterstructures place <schematic> <SURFACE/SKY/LIQUID_SURFACE/UNDERGROUND_DEEP/UNDERGROUND_SHALLOW>");
+        setUsage("/bs place <schematic> <SURFACE/SKY/LIQUID_SURFACE/UNDERGROUND_DEEP/UNDERGROUND_SHALLOW>");
     }
 
     @Override

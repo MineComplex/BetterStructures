@@ -8,7 +8,6 @@ import com.magmaguy.betterstructures.util.WorldEditUtils;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.util.Vector;
 
 public class FitSurfaceBuilding extends FitAnything {
 
@@ -30,7 +29,7 @@ public class FitSurfaceBuilding extends FitAnything {
     private void scan(Chunk chunk) {
         //Note about the adjustments:
         //The 8 offset on x and y is to center the anchor on the chunk
-        Location originalLocation = new Location(chunk.getWorld(), chunk.getX() * 16D, 0, chunk.getZ() * 16D).add(new Vector(8, 0, 8));
+        Location originalLocation = new Location(chunk.getWorld(), chunk.getX() * 16D, 0, chunk.getZ() * 16D).add(8, 0, 8);
         originalLocation.setY(originalLocation.getWorld().getHighestBlockYAt(originalLocation));
         randomizeSchematicContainer(originalLocation, GeneratorConfigFields.StructureType.SURFACE);
         if (schematicClipboard == null) {
@@ -65,7 +64,7 @@ public class FitSurfaceBuilding extends FitAnything {
     }
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {
-        Location iteratedLocation = originalLocation.clone().add(new Vector(chunkX * 16, 0, chunkZ * 16));
+        Location iteratedLocation = originalLocation.clone().add(chunkX * 16, 0, chunkZ * 16);
 
         if (originalLocation.getWorld().getEnvironment().equals(World.Environment.NETHER)) startingScore = 200;
         double score = Topology.scan(startingScore, scanStep, schematicClipboard, iteratedLocation, schematicOffset);

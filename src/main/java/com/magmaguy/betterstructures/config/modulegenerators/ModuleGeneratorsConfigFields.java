@@ -10,39 +10,34 @@ import org.bukkit.World;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class ModuleGeneratorsConfigFields extends CustomConfigFields {
-    @Getter
     protected int radius;
-    @Getter
     protected boolean edges;
     protected List<String> startModules;
-    @Getter
     protected int minChunkY;
-    @Getter
     protected int maxChunkY;
-    @Getter
     protected int moduleSizeXZ;
-    @Getter
     protected int moduleSizeY;
-    @Getter
     protected boolean debug;
-    @Getter
     protected boolean useGradientLevels;
-    @Getter
     protected String spawnPoolSuffix;
-    @Getter
     protected boolean isWorldGeneration;
-    @Getter
     protected String treasureFile;
-    @Getter
-    @Setter
-    private List<String> validWorlds = null;
-    @Getter
-    @Setter
-    private List<World.Environment> validWorldEnvironments = null;
-    @Getter
     @Setter
     protected int centerModuleAltitude = 0;
+    @Setter
+    private List<String> validWorlds = null;
+    @Setter
+    private List<World.Environment> validWorldEnvironments = null;
+
+    public ModuleGeneratorsConfigFields(String filename, boolean isEnabled) {
+        super(filename, isEnabled);
+    }
+
+    public ModuleGeneratorsConfigFields(String filename) {
+        super(filename, true);
+    }
 
     public List<String> getStartModules() {
         List<String> existingModules = new ArrayList<>();
@@ -50,20 +45,6 @@ public class ModuleGeneratorsConfigFields extends CustomConfigFields {
             if (startModules.contains(value.getFilename().replace(".yml", ".schem")))
                 existingModules.add(value.getFilename().replace(".yml", ".schem"));
         return existingModules;
-    }
-
-    /**
-     * Used by plugin-generated files (defaults)
-     *
-     * @param filename
-     * @param isEnabled
-     */
-    public ModuleGeneratorsConfigFields(String filename, boolean isEnabled) {
-        super(filename, isEnabled);
-    }
-
-    public ModuleGeneratorsConfigFields(String filename) {
-        super(filename, true);
     }
 
     @Override

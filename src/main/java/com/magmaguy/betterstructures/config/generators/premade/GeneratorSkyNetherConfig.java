@@ -6,7 +6,7 @@ import org.bukkit.World;
 import java.util.Arrays;
 
 public class GeneratorSkyNetherConfig extends GeneratorConfigFields {
-    public GeneratorSkyNetherConfig(){
+    public GeneratorSkyNetherConfig() {
         super("generator_sky_nether", true, Arrays.asList(StructureType.SKY));
         setValidWorldEnvironments(Arrays.asList(World.Environment.NETHER));
         setTreasureFilename("treasure_nether.yml");
