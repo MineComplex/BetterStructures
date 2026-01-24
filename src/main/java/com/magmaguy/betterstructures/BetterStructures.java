@@ -36,8 +36,8 @@ public final class BetterStructures extends JavaPlugin {
         }
         new DefaultConfig();
         new ValidWorldsConfig();
+
         //Creates import folder if one doesn't exist, imports any content inside
-        MagmaCore.onEnable();
         MagmaCore.initializeImporter();
 
         new TreasureConfig();
