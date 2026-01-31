@@ -2,12 +2,26 @@ package com.magmaguy.betterstructures.config.schematics;
 
 import com.magmaguy.betterstructures.MetadataHandler;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
+import com.magmaguy.betterstructures.util.WorldEditUtils;
 import com.magmaguy.betterstructures.worldedit.Schematic;
 import com.magmaguy.magmacore.config.CustomConfig;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.world.block.BaseBlock;
+import com.sk89q.worldedit.world.block.BlockTypes;
 import lombok.Getter;
+import lombok.SneakyThrows;
+import org.bukkit.Material;
+import org.bukkit.Tag;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -37,7 +51,9 @@ public class SchematicConfig extends CustomConfig {
         }
 
         for (SchematicConfigField schematicConfigField : schematicConfigurations.values()) {
-            if (!schematicConfigField.isEnabled()) continue;
+            if (!schematicConfigField.isEnabled())
+                continue;
+
             String schematicFilename = convertFromConfigurationFilename(schematicConfigField.getFilename());
             Clipboard clipboard = null;
             for (File file : clipboards.keySet())
@@ -57,7 +73,9 @@ public class SchematicConfig extends CustomConfig {
     private static void scanDirectoryForSchematics(File file, HashMap<File, Clipboard> clipboards) {
         if (file.getName().endsWith(".schem")) {
             Clipboard clipboard = Schematic.load(file);
-            if (clipboard == null) return;
+            if (clipboard == null)
+                return;
+
             clipboards.put(file, clipboard);
         } else if (file.isDirectory())
             for (File iteratedFile : Objects.requireNonNull(file.listFiles()))

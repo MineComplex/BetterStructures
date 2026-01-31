@@ -11,7 +11,9 @@ import com.magmaguy.betterstructures.worldedit.Schematic;
 import com.magmaguy.magmacore.util.Logger;
 import com.magmaguy.magmacore.util.SpigotMessage;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.math.BlockVector3;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -31,33 +33,34 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
+@NoArgsConstructor
 public class FitAnything {
 
     protected final int searchRadius = 1;
     protected final int scanStep = 3;
-    private final HashMap<Material, Integer> undergroundPedestalMaterials = new HashMap<>();
-    private final HashMap<Material, Integer> surfacePedestalMaterials = new HashMap<>();
-    @Getter
-    protected SchematicContainer schematicContainer;
-    protected double startingScore = 100;
-    @Getter
-    protected Clipboard schematicClipboard;
-    @Getter
-    protected Vector schematicOffset;
-    protected int verticalOffset = 0;
-    //At 10% it is assumed a fit is so bad it's better just to skip
-    protected double highestScore = 10;
+
     @Getter
     protected Location location;
     protected GeneratorConfigFields.StructureType structureType;
+
+    private final HashMap<Material, Integer> surfacePedestalMaterials = new HashMap<>();
+    private final HashMap<Material, Integer> undergroundPedestalMaterials = new HashMap<>();
     private Material pedestalMaterial;
+
+    @Getter
+    protected SchematicContainer schematicContainer;
+    @Getter
+    protected Vector schematicOffset;
+    protected int verticalOffset = 0;
+
+    //At 10% it is assumed a fit is so bad it's better just to skip
+    protected double startingScore = 100;
+    protected double highestScore = 10;
 
     public FitAnything(SchematicContainer schematicContainer) {
         this.schematicContainer = schematicContainer;
-        this.verticalOffset = schematicContainer.getClipboard().getMinimumPoint().y() - schematicContainer.getClipboard().getOrigin().y();
-    }
-
-    public FitAnything() {
+        this.verticalOffset = schematicContainer.getClipboard().getMinimumPoint().y() -
+                schematicContainer.getClipboard().getOrigin().y();
     }
 
     public static void commandBasedCreation(Chunk chunk, GeneratorConfigFields.StructureType structureType, SchematicContainer container) {
@@ -82,10 +85,11 @@ public class FitAnything {
     }
 
     protected void randomizeSchematicContainer(Location location, GeneratorConfigFields.StructureType structureType) {
-        if (schematicClipboard != null) return;
+        if (schematicContainer != null)
+            return;
+
         schematicContainer = SchematicPicker.pick(location, structureType);
         if (schematicContainer != null) {
-            schematicClipboard = schematicContainer.getClipboard();
             verticalOffset = schematicContainer.getClipboard().getMinimumPoint().y() - schematicContainer.getClipboard().getOrigin().y();
         }
     }
@@ -112,7 +116,7 @@ public class FitAnything {
 
         // Paste the schematic with the moved logic
         Schematic.pasteSchematic(
-                schematicClipboard,
+                schematicContainer.getClipboard(),
                 location,
                 schematicOffset,
                 pedestalMaterialProvider,
@@ -156,38 +160,25 @@ public class FitAnything {
                     Logger.warn("Failed to correctly fill chests!");
                     exception.printStackTrace();
                 }
-                try {
-                    spawnEntities();
-                } catch (Exception exception) {
-                    Logger.warn("Failed to correctly spawn entities!");
-                    exception.printStackTrace();
-                }
-                try {
-                    spawnProps(fitAnything.schematicClipboard);
-                } catch (Exception exception) {
-                    Logger.warn("Failed to correctly spawn props!");
-                    exception.printStackTrace();
-                }
             }
         };
     }
 
-    private void spawnProps(Clipboard clipboard) {
-        // Don't add schematicOffset here - let pasteArmorStandsOnlyFromTransformed handle the alignment
-        WorldEditUtils.pasteArmorStandsOnlyFromTransformed(clipboard, location.clone().add(schematicOffset));
-    }
-
     private void assignPedestalMaterial(Location location) {
-        if (this instanceof FitAirBuilding) return;
+        if (this instanceof FitAirBuilding)
+            return;
+
         pedestalMaterial = schematicContainer.getSchematicConfigField().getPedestalMaterial();
         Location lowestCorner = location.clone().add(schematicOffset);
 
         int maxSurfaceHeightScan = 20;
 
         //get underground pedestal blocks
-        for (int x = 0; x < schematicClipboard.getDimensions().x(); x++)
-            for (int z = 0; z < schematicClipboard.getDimensions().z(); z++)
-                for (int y = 0; y < schematicClipboard.getDimensions().y(); y++) {
+
+        BlockVector3 dimensions = schematicContainer.getClipboard().getDimensions();
+        for (int x = 0; x < dimensions.x(); x++)
+            for (int z = 0; z < dimensions.z(); z++)
+                for (int y = 0; y < dimensions.y(); y++) {
                     Block groundBlock = lowestCorner.clone().add(x, y, z).getBlock();
                     Block aboveBlock = groundBlock.getRelative(BlockFace.UP);
 
@@ -196,9 +187,9 @@ public class FitAnything {
                 }
 
         //get above ground pedestal blocks, if any
-        for (int x = 0; x < schematicClipboard.getDimensions().x(); x++)
-            for (int z = 0; z < schematicClipboard.getDimensions().z(); z++) {
-                boolean scanUp = lowestCorner.clone().add(x, schematicClipboard.getDimensions().y(), z).getBlock().getType().isSolid();
+        for (int x = 0; x < dimensions.x(); x++)
+            for (int z = 0; z < dimensions.z(); z++) {
+                boolean scanUp = lowestCorner.clone().add(x, dimensions.y(), z).getBlock().getType().isSolid();
                 for (int y = 0; y < maxSurfaceHeightScan; y++) {
                     Block groundBlock = lowestCorner.clone().add(x, scanUp ? y : -y, z).getBlock();
                     Block aboveBlock = groundBlock.getRelative(BlockFace.UP);
@@ -213,10 +204,12 @@ public class FitAnything {
 
     private Material getPedestalMaterial(boolean isPedestalSurface) {
         if (isPedestalSurface) {
-            if (surfacePedestalMaterials.isEmpty()) return pedestalMaterial;
+            if (surfacePedestalMaterials.isEmpty())
+                return pedestalMaterial;
             return getRandomMaterialBasedOnWeight(surfacePedestalMaterials);
         } else {
-            if (undergroundPedestalMaterials.isEmpty()) return pedestalMaterial;
+            if (undergroundPedestalMaterials.isEmpty())
+                return pedestalMaterial;
             return getRandomMaterialBasedOnWeight(undergroundPedestalMaterials);
         }
     }
@@ -242,10 +235,14 @@ public class FitAnything {
     }
 
     private void addPedestal(Location location) {
-        if (this instanceof FitAirBuilding || this instanceof FitLiquidBuilding) return;
+        if (this instanceof FitAirBuilding || this instanceof FitLiquidBuilding)
+            return;
+
         Location lowestCorner = location.clone().add(schematicOffset);
-        for (int x = 0; x < schematicClipboard.getDimensions().x(); x++)
-            for (int z = 0; z < schematicClipboard.getDimensions().z(); z++) {
+        BlockVector3 clipboard = schematicContainer.getClipboard().getDimensions();
+
+        for (int x = 0; x < clipboard.x(); x++)
+            for (int z = 0; z < clipboard.z(); z++) {
                 //Only add pedestals for areas with a solid floor, some schematics can have rounded air edges to better fit terrain
                 Block groundBlock = lowestCorner.clone().add(x, 0, z).getBlock();
                 if (groundBlock.getType().isAir())
@@ -264,10 +261,11 @@ public class FitAnything {
     }
 
     private void clearTrees(Location location) {
-        Location highestCorner = location.clone().add(schematicOffset).add(0, schematicClipboard.getDimensions().y() + 1, 0);
+        BlockVector3 clipboard = schematicContainer.getClipboard().getDimensions();
+        Location highestCorner = location.clone().add(schematicOffset).add(0, clipboard.y() + 1, 0);
         boolean detectedTreeElement = true;
-        for (int x = 0; x < schematicClipboard.getDimensions().x(); x++)
-            for (int z = 0; z < schematicClipboard.getDimensions().z(); z++) {
+        for (int x = 0; x < clipboard.x(); x++)
+            for (int z = 0; z < clipboard.z(); z++) {
                 for (int y = 0; y < 31; y++) {
                     if (!detectedTreeElement)
                         break;
@@ -300,32 +298,4 @@ public class FitAnything {
             }
     }
 
-    private void spawnEntities() {
-        for (Vector entityPosition : schematicContainer.getVanillaSpawns().keySet()) {
-            Location signLocation = LocationProjector.project(location, schematicOffset, entityPosition).clone();
-            signLocation.getBlock().setType(Material.AIR);
-            signLocation.add(0.5, 0, 0.5);
-            signLocation.getChunk().load();
-
-            Entity entity = signLocation.getWorld().spawnEntity(signLocation, schematicContainer.getVanillaSpawns().get(entityPosition));
-            entity.setPersistent(true);
-            if (entity instanceof LivingEntity) {
-                ((LivingEntity) entity).setRemoveWhenFarAway(false);
-            }
-
-            if (entity instanceof EnderCrystal enderCrystal) {
-                enderCrystal.setShowingBottom(false);
-            }
-        }
-
-        for (Vector elitePosition : schematicContainer.getEliteMobsSpawns().keySet()) {
-            Location eliteLocation = LocationProjector.project(location, schematicOffset, elitePosition).clone();
-            eliteLocation.getBlock().setType(Material.AIR);
-        }
-
-        for (Map.Entry<Vector, String> entry : schematicContainer.getMythicMobsSpawns().entrySet()) {
-            Location mobLocation = LocationProjector.project(location, schematicOffset, entry.getKey()).clone();
-            mobLocation.getBlock().setType(Material.AIR);
-        }
-    }
 }

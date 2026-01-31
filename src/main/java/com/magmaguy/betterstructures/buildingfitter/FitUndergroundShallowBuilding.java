@@ -37,8 +37,8 @@ public class FitUndergroundShallowBuilding {
                 new FitUndergroundBuilding(chunk, schematicContainer, 5, 60, GeneratorConfigFields.StructureType.UNDERGROUND_SHALLOW);
                 break;
             case THE_END:
-                new FitUndergroundBuilding(chunk, schematicContainer, 0, 80, GeneratorConfigFields.StructureType.UNDERGROUND_SHALLOW);
                 //The nether has no "deep" underground area, it's floating islands
+                new FitUndergroundBuilding(chunk, schematicContainer, 0, 80, GeneratorConfigFields.StructureType.UNDERGROUND_SHALLOW);
                 break;
             default:
                 Logger.warn("Unexpected environment type: " + chunk.getWorld().getEnvironment());

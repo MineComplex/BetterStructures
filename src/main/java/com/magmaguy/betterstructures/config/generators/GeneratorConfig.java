@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public class GeneratorConfig extends CustomConfig {
     @Getter
-    private static HashMap<String, GeneratorConfigFields> generatorConfigurations = new HashMap<>();
+    private static final HashMap<String, GeneratorConfigFields> generatorConfigurations = new HashMap<>();
 
     public GeneratorConfig() {
         super("generators", "com.magmaguy.betterstructures.config.generators.premade", GeneratorConfigFields.class);

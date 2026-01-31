@@ -37,10 +37,6 @@ public class SchematicContainer {
     private final String clipboardFilename;
     private final String configFilename;
     private final List<Vector> chestLocations = new ArrayList<>();
-    private final HashMap<Vector, EntityType> vanillaSpawns = new HashMap<>();
-
-    private final HashMap<Vector, String> eliteMobsSpawns = new HashMap<>(), mythicMobsSpawns = new HashMap<>();
-
     private ChestContents chestContents;
 
     public SchematicContainer(Clipboard clipboard, String clipboardFilename, SchematicConfigField schematicConfigField, String configFilename) {
@@ -66,38 +62,6 @@ public class SchematicContainer {
                             minecraftMaterial.equals(Material.TRAPPED_CHEST) ||
                             minecraftMaterial.equals(Material.SHULKER_BOX)) {
                         chestLocations.add(new Vector(x, y, z));
-                        continue;
-                    }
-
-                    if (Tag.SIGNS.isTagged(minecraftMaterial)) {
-                        BaseBlock baseBlock = clipboard.getFullBlock(translatedLocation);
-                        //For future reference, I don't know how to get the data in any other way than parsing the string. Sorry!
-                        String line1 = WorldEditUtils.getLine(baseBlock, 1).toLowerCase();
-
-                        //Case for spawning a vanilla mob
-                        if (line1.contains("[spawn]")) {
-                            String line2 = WorldEditUtils.getLine(baseBlock, 2).toUpperCase().replaceAll("\"", "");
-                            EntityType entityType;
-                            try {
-                                entityType = EntityType.valueOf(line2);
-                            } catch (Exception ex) {
-                                if (line2.equalsIgnoreCase("WITHER_CRYSTAL"))
-                                    entityType = EntityType.END_CRYSTAL;
-                                else {
-                                    Logger.warn("Failed to determine entity type for sign! Entry was " + line2 + " in schematic " + clipboardFilename + " ! Fix this by inputting a valid entity type!");
-                                    continue;
-                                }
-                            }
-                            vanillaSpawns.put(new Vector(x, y, z), entityType);
-                        } else if (line1.contains("[elitemobs]")) {
-                            StringBuilder filename = new StringBuilder();
-                            for (int i = 2; i < 5; i++) filename.append(WorldEditUtils.getLine(baseBlock, i));
-                            eliteMobsSpawns.put(new Vector(x, y, z), filename.toString());
-                        } else if (line1.contains("[mythicmobs]")) { // carm start - Support MythicMobs
-                            String mob = WorldEditUtils.getLine(baseBlock, 2);
-                            String level = WorldEditUtils.getLine(baseBlock, 3);
-                            mythicMobsSpawns.put(new Vector(x, y, z), mob + (level.isEmpty() ? "" : ":" + level));
-                        }
                     }
                 }
 

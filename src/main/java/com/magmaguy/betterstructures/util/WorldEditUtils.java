@@ -1,5 +1,6 @@
 package com.magmaguy.betterstructures.util;
 
+import com.fastasyncworldedit.core.nbt.FaweCompoundTag;
 import com.magmaguy.magmacore.util.Logger;
 import com.sk89q.jnbt.CompoundTag;
 import com.sk89q.jnbt.ListTag;
@@ -140,6 +141,11 @@ public class WorldEditUtils {
                 return false;
             }
 
+            @Override
+            public boolean tile(int x, int y, int z, FaweCompoundTag tile) throws WorldEditException {
+                return false;
+            }
+
             @Nullable
             @Override
             public Operation commit() {
@@ -201,42 +207,12 @@ public class WorldEditUtils {
             public void setOrigin(BlockVector3 origin) {
 
             }
+
+            @Override
+            public void removeEntity(Entity entity) {
+
+            }
         };
-    }
-
-    public static void pasteArmorStandsOnlyFromTransformed(Clipboard transformedClipboard, Location location) {
-        com.sk89q.worldedit.world.World adaptedWorld = BukkitAdapter.adapt(Objects.requireNonNull(location.getWorld()));
-
-        try (EditSession editSession = WorldEdit.getInstance().newEditSession(adaptedWorld)) {
-            editSession.setTrackingHistory(false);
-            editSession.setSideEffectApplier(SideEffectSet.none());
-
-            ClipboardHolder clipboardHolder = new ClipboardHolder(transformedClipboard);
-
-            BlockVector3 minPoint = transformedClipboard.getMinimumPoint();
-            BlockVector3 origin = transformedClipboard.getOrigin();
-
-            // Align entities the same way you aligned blocks: min -> base
-            BlockVector3 pastePosition = BlockVector3.at(
-                    location.getBlockX() + (origin.x() - minPoint.x()),
-                    location.getBlockY() + (origin.y() - minPoint.y()),
-                    location.getBlockZ() + (origin.z() - minPoint.z())
-            );
-
-            Operation operation = clipboardHolder
-                    .createPaste(editSession)
-                    .to(pastePosition)
-                    .copyEntities(true)
-                    .copyBiomes(false)
-                    .ignoreAirBlocks(true)
-                    .maskSource(new BlockTypeMask(transformedClipboard, new BlockType[0]))
-                    .build();
-
-            Operations.complete(operation);
-
-        } catch (Exception e) {
-            Logger.warn("Failed to paste entities at " + location + ": " + e.getMessage());
-        }
     }
 
 }

@@ -1,20 +1,14 @@
 package com.magmaguy.magmacore.config;
 
 import com.magmaguy.magmacore.util.ChatColorConverter;
-import com.magmaguy.magmacore.util.ItemStackGenerator;
 import com.magmaguy.magmacore.util.Logger;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
-import org.bukkit.inventory.meta.SkullMeta;
 
 import java.io.File;
 import java.io.IOException;
@@ -277,44 +271,6 @@ public abstract class CustomConfigFields {
         }
         if (value == null)
             return pluginDefault;
-        return value;
-    }
-
-    public ItemStack processItemStack(String path, ItemStack value, ItemStack pluginDefault, boolean forceWriteDefault) {
-        if (!configHas(path)) {
-            if (forceWriteDefault || value != pluginDefault)
-                processString(path, itemStackDeserializer(value), itemStackDeserializer(pluginDefault), forceWriteDefault);
-            return value;
-        }
-        try {
-            String materialString = processString(path, itemStackDeserializer(value), itemStackDeserializer(pluginDefault), forceWriteDefault);
-            if (materialString == null)
-                return null;
-            if (materialString.matches("[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")) {
-                ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD);
-                SkullMeta skullMeta = (SkullMeta) playerHead.getItemMeta();
-                skullMeta.setOwningPlayer(Bukkit.getOfflinePlayer(UUID.fromString(materialString)));
-                playerHead.setItemMeta(skullMeta);
-                return playerHead;
-            }
-            if (materialString.contains(":")) {
-                ItemStack itemStack = ItemStackGenerator.generateItemStack(Material.getMaterial(materialString.split(":")[0]));
-                if (materialString.split(":")[0].contains("leather_") || materialString.split(":")[0].contains("LEATHER_")) {
-                    LeatherArmorMeta leatherArmorMeta = (LeatherArmorMeta) itemStack.getItemMeta();
-                    leatherArmorMeta.setColor(Color.fromRGB(Integer.parseInt(materialString.split(":")[1], 16)));
-                    itemStack.setItemMeta(leatherArmorMeta);
-                } else {
-                    ItemMeta itemMeta = itemStack.getItemMeta();
-                    itemMeta.setCustomModelData(Integer.parseInt(materialString.split(":")[1]));
-                    itemStack.setItemMeta(itemMeta);
-                }
-                return itemStack;
-            } else
-                return ItemStackGenerator.generateItemStack(Material.getMaterial(materialString));
-        } catch (Exception ex) {
-            Logger.warn("File " + filename + " has an incorrect entry for " + path);
-            Logger.warn("Entry: " + value);
-        }
         return value;
     }
 

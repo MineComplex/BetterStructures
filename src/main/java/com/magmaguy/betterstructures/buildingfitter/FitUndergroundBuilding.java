@@ -5,6 +5,7 @@ import com.magmaguy.betterstructures.config.DefaultConfig;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
+import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -24,7 +25,6 @@ public class FitUndergroundBuilding extends FitAnything {
         this.lowestY = lowestY;
         this.highestY = highestY;
         this.schematicContainer = schematicContainer;
-        this.schematicClipboard = schematicContainer.getClipboard();
         scan(chunk);
     }
 
@@ -187,10 +187,11 @@ public class FitUndergroundBuilding extends FitAnything {
         }
 
         randomizeSchematicContainer(originalLocation, structureType);
-        if (schematicClipboard == null) {
+        if (schematicContainer == null) {
             //Bukkit.getLogger().info("Did not spawn structure in biome " + originalLocation.getBlock().getBiome() + " because no valid schematics exist for it.");
             return;
         }
+        Clipboard schematicClipboard = schematicContainer.getClipboard();
 
         schematicOffset = WorldEditUtils.getSchematicOffset(schematicClipboard);
 
@@ -236,7 +237,7 @@ public class FitUndergroundBuilding extends FitAnything {
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {
         Location iteratedLocation = originalLocation.clone().add(chunkX * 16, 0, chunkZ * 16);
-        double score = TerrainAdequacy.scan(scanStep, schematicClipboard, iteratedLocation, schematicOffset, TerrainAdequacy.ScanType.UNDERGROUND);
+        double score = TerrainAdequacy.scan(scanStep, schematicContainer.getClipboard(), iteratedLocation, schematicOffset, TerrainAdequacy.ScanType.UNDERGROUND);
         if (originalLocation.getWorld().getEnvironment() != World.Environment.NETHER) {
             if (score < 70)
                 return;

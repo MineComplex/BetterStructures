@@ -30,8 +30,8 @@ public class WFCGenerator {
     private String startingModule;
     @Getter
     private World world;
-    private volatile boolean isGenerating;
-    private volatile boolean isCancelled;
+    private volatile boolean generating;
+    private volatile boolean cancelled;
 
     private int rollbackCounter = 0;
 
@@ -82,10 +82,10 @@ public class WFCGenerator {
     }
 
     private void start(String startingModule) {
-        if (isGenerating) {
+        if (generating) {
             return;
         }
-        isGenerating = true;
+        generating = true;
 
         try {
             WFCNode startChunk = createStartChunk(startingModule);
@@ -116,7 +116,7 @@ public class WFCGenerator {
     }
 
     private void generateFast() {
-        while (!isCancelled) {
+        while (!cancelled) {
             WFCNode nextCell = spatialGrid.getLowestEntropyNode();
             if (nextCell == null) {
                 done();
@@ -173,7 +173,7 @@ public class WFCGenerator {
             player.sendMessage("Done assembling!");
             player.sendMessage("It will take a moment to paste the structure, and will require relogging.");
         }
-        isGenerating = false;
+        generating = false;
         instantPaste();
         spatialGrid.clearGenerationData();
     }
@@ -187,7 +187,7 @@ public class WFCGenerator {
      * Cancels the generation process.
      */
     public void cancel() {
-        isCancelled = true;
+        cancelled = true;
     }
 
     private void instantPaste() {

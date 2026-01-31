@@ -5,6 +5,7 @@ import com.magmaguy.betterstructures.buildingfitter.util.Topology;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
+import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -16,7 +17,6 @@ public class FitSurfaceBuilding extends FitAnything {
         super(schematicContainer);
         super.structureType = GeneratorConfigFields.StructureType.SURFACE;
         this.schematicContainer = schematicContainer;
-        this.schematicClipboard = schematicContainer.getClipboard();
         scan(chunk);
     }
 
@@ -32,10 +32,10 @@ public class FitSurfaceBuilding extends FitAnything {
         Location originalLocation = new Location(chunk.getWorld(), chunk.getX() * 16D, 0, chunk.getZ() * 16D).add(8, 0, 8);
         originalLocation.setY(originalLocation.getWorld().getHighestBlockYAt(originalLocation));
         randomizeSchematicContainer(originalLocation, GeneratorConfigFields.StructureType.SURFACE);
-        if (schematicClipboard == null) {
-            //Bukkit.getLogger().info("Did not spawn structure in biome " + originalLocation.getBlock().getBiome() + " because no valid schematics exist for it.");
+        if (schematicContainer == null)
             return;
-        }
+
+        Clipboard schematicClipboard = schematicContainer.getClipboard();
         schematicOffset = WorldEditUtils.getSchematicOffset(schematicClipboard);
 
         chunkScan(originalLocation, 0, 0);
@@ -53,12 +53,8 @@ public class FitSurfaceBuilding extends FitAnything {
                 if (highestScore > 50) break;
             }
 
-        if (location == null) {
-            //Bukkit.broadcastMessage("Yo your locations are whack!");
+        if (location == null)
             return;
-        }
-
-        //Bukkit.broadcastMessage("Fit with score = " + highestScore);
 
         super.paste(location);
     }
@@ -66,23 +62,21 @@ public class FitSurfaceBuilding extends FitAnything {
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {
         Location iteratedLocation = originalLocation.clone().add(chunkX * 16, 0, chunkZ * 16);
 
-        if (originalLocation.getWorld().getEnvironment().equals(World.Environment.NETHER)) startingScore = 200;
+        Clipboard schematicClipboard = schematicContainer.getClipboard();
+        if (originalLocation.getWorld().getEnvironment().equals(World.Environment.NETHER))
+            startingScore = 200;
         double score = Topology.scan(startingScore, scanStep, schematicClipboard, iteratedLocation, schematicOffset);
 
         //Continue to the next scan in case of poor fit
-        if (score == 0) {
-            //Bukkit.getLogger().info("Exited because of scoring of individual points");
+        if (score == 0)
             return;
-        }
 
         double adequacyScore = TerrainAdequacy.scan(scanStep, schematicClipboard, iteratedLocation, schematicOffset, TerrainAdequacy.ScanType.SURFACE);
         //Adequacy has an impact of 50% on the score
         score += (.5 * adequacyScore);
 
-        if (score == 0) {
-            //Bukkit.getLogger().info("Exited because ground or surface fit was bad");
+        if (score == 0)
             return;
-        }
 
         if (score > highestScore) {
             highestScore = score;

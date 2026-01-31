@@ -66,7 +66,8 @@ public class ModulesConfig extends CustomConfig {
     private static void scanDirectoryForSchematics(File file, HashMap<File, Clipboard> clipboards) {
         if (file.getName().endsWith(".schem")) {
             Clipboard clipboard = Schematic.load(file);
-            if (clipboard == null) return;
+            if (clipboard == null)
+                return;
             clipboards.put(file, clipboard);
         } else if (file.isDirectory())
             for (File iteratedFile : Objects.requireNonNull(file.listFiles()))

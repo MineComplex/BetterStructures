@@ -32,7 +32,8 @@ public class ChestContents {
      */
     public ChestContents(TreasureConfigFields treasureConfigFields) {
         this.treasureConfigFields = treasureConfigFields;
-        if (treasureConfigFields.getRawLoot() == null) return;
+        if (treasureConfigFields.getRawLoot() == null)
+            return;
         processRarities(treasureConfigFields.getRawLoot());
     }
 
@@ -188,7 +189,7 @@ public class ChestContents {
         }
     }
 
-    private class ChestRarity {
+    private static class ChestRarity {
         private final double chestWeight;
         private final List<ChestEntry> chestEntries;
 

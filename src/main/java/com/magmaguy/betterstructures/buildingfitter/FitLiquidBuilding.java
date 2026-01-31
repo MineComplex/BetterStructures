@@ -4,6 +4,7 @@ import com.magmaguy.betterstructures.buildingfitter.util.TerrainAdequacy;
 import com.magmaguy.betterstructures.config.generators.GeneratorConfigFields;
 import com.magmaguy.betterstructures.schematics.SchematicContainer;
 import com.magmaguy.betterstructures.util.WorldEditUtils;
+import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -15,7 +16,6 @@ public class FitLiquidBuilding extends FitAnything {
         super(schematicContainer);
         super.structureType = GeneratorConfigFields.StructureType.LIQUID_SURFACE;
         this.schematicContainer = schematicContainer;
-        this.schematicClipboard = schematicContainer.getClipboard();
         scan(chunk);
     }
 
@@ -50,10 +50,11 @@ public class FitLiquidBuilding extends FitAnything {
         }
 
         randomizeSchematicContainer(originalLocation, GeneratorConfigFields.StructureType.LIQUID_SURFACE);
-        if (schematicClipboard == null) {
+        if (schematicContainer == null) {
             //Bukkit.getLogger().info("Did not spawn structure in biome " + originalLocation.getBlock().getBiome() + " because no valid schematics exist for it.");
             return;
         }
+        Clipboard schematicClipboard = schematicContainer.getClipboard();
         schematicOffset = WorldEditUtils.getSchematicOffset(schematicClipboard);
 
         chunkScan(originalLocation, 0, 0);
@@ -68,7 +69,6 @@ public class FitLiquidBuilding extends FitAnything {
             }
 
         if (location == null) {
-            //Bukkit.broadcastMessage("Yo your locations are whack!");
             return;
         }
 
@@ -77,7 +77,7 @@ public class FitLiquidBuilding extends FitAnything {
 
     private void chunkScan(Location originalLocation, int chunkX, int chunkZ) {
         Location iteratedLocation = originalLocation.clone().add(chunkX * 16, 1, chunkZ * 16);
-        double newScore = TerrainAdequacy.scan(scanStep, schematicClipboard, iteratedLocation, schematicOffset, TerrainAdequacy.ScanType.LIQUID);
+        double newScore = TerrainAdequacy.scan(scanStep, schematicContainer.getClipboard(), iteratedLocation, schematicOffset, TerrainAdequacy.ScanType.LIQUID);
         if (newScore < 90) return;
         if (newScore == startingScore) {
             highestScore = newScore;
